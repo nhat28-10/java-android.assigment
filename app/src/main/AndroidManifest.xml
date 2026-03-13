@@ -17,6 +17,7 @@
         <activity android:name=".annotator.AnnotatorOverviewActivity" />
         <activity android:name=".auth.LoginActivity" />
 
+
         <activity
             android:name=".SplashActivity"
             android:exported="true">
