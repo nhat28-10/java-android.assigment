@@ -16,6 +16,8 @@
         <activity android:name=".reviewer.ReviewerDashboardActivity" />
         <activity android:name=".annotator.AnnotatorOverviewActivity" />
         <activity android:name=".auth.LoginActivity" />
+        <activity android:name=".manager.CreateProjectActivity"/>
+        <activity android:name=".manager.ManagerProjectsActivity" />
 
 
         <activity

@@ -63,7 +63,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
 
     private void setupActions() {
         btnProjects.setOnClickListener(v -> {
-            Intent intent = new Intent(ManagerDashboardActivity.this, ProjectsActivity.class);
+            Intent intent = new Intent(ManagerDashboardActivity.this, ManagerProjectsActivity.class);
             startActivity(intent);
         });
 
