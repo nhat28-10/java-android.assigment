@@ -45,7 +45,14 @@ public class ManagerProjectsActivity extends AppCompatActivity {
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Intent data = result.getData();
-                    ProjectItem project = (ProjectItem) data.getSerializableExtra(EXTRA_PROJECT_RESULT);
+
+                    ProjectItem project;
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        project = data.getSerializableExtra(EXTRA_PROJECT_RESULT, ProjectItem.class);
+                    } else {
+                        project = (ProjectItem) data.getSerializableExtra(EXTRA_PROJECT_RESULT);
+                    }
+
                     String mode = data.getStringExtra(EXTRA_PROJECT_MODE);
 
                     if (project != null) {
@@ -53,8 +60,21 @@ public class ManagerProjectsActivity extends AppCompatActivity {
                             updateExistingProject(project);
                             showToast("Project updated");
                         } else {
-                            allProjects.add(0, project);
-                            showToast("Project created");
+                            boolean existed = false;
+                            for (int i = 0; i < allProjects.size(); i++) {
+                                ProjectItem current = allProjects.get(i);
+                                if (current.getName() != null &&
+                                        current.getName().equalsIgnoreCase(project.getName())) {
+                                    allProjects.set(i, project);
+                                    existed = true;
+                                    break;
+                                }
+                            }
+
+                            if (!existed) {
+                                allProjects.add(0, project);
+                                showToast("Project created");
+                            }
                         }
                         filterProjects(edtSearchProjects.getText().toString().trim());
                     }
@@ -360,7 +380,11 @@ public class ManagerProjectsActivity extends AppCompatActivity {
 
         card.addView(root);
 
-        btnView.setOnClickListener(v -> showToast(item.getName()));
+        btnView.setOnClickListener(v -> {
+            Intent intent = new Intent(ManagerProjectsActivity.this, ProjectDetailActivity.class);
+            intent.putExtra(ProjectDetailActivity.EXTRA_PROJECT_DETAIL, item);
+            projectLauncher.launch(intent);
+        });
 
         btnEdit.setOnClickListener(v -> {
             Intent intent = new Intent(ManagerProjectsActivity.this, CreateProjectActivity.class);

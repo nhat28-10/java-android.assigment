@@ -18,6 +18,7 @@
         <activity android:name=".auth.LoginActivity" />
         <activity android:name=".manager.CreateProjectActivity"/>
         <activity android:name=".manager.ManagerProjectsActivity" />
+        <activity android:name=".manager.ProjectDetailActivity" />
 
 
         <activity
