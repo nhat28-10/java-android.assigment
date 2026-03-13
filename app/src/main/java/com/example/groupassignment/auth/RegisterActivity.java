@@ -12,6 +12,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.example.groupassignment.R;
 import androidx.appcompat.app.AppCompatActivity;
+import com.example.groupassignment.utils.SessionManager;
+import com.example.groupassignment.manager.ManagerDashboardActivity;
+import com.example.groupassignment.annotator.AnnotatorOverviewActivity;
+import com.example.groupassignment.reviewer.ReviewerDashboardActivity;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -72,6 +76,7 @@ public class RegisterActivity extends AppCompatActivity {
         String password = edtPassword.getText().toString().trim();
         String confirmPassword = edtConfirmPassword.getText().toString().trim();
         String roleLabel = spRole.getSelectedItem().toString();
+        String roleValue = mapRoleToApiValue(roleLabel);
 
         if (TextUtils.isEmpty(fullName)) {
             edtFullName.setError("Please enter your full name");
@@ -121,7 +126,13 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        String roleValue = mapRoleToApiValue(roleLabel);
+        SessionManager sessionManager = new SessionManager(RegisterActivity.this);
+        sessionManager.saveLogin(
+                "demo_token",
+                roleValue,
+                fullName,
+                email
+        );
 
         Toast.makeText(
                 this,
@@ -129,13 +140,15 @@ public class RegisterActivity extends AppCompatActivity {
                 Toast.LENGTH_SHORT
         ).show();
 
-        // TODO:
-        // 1. gọi API register
-        // 2. lưu token/user nếu backend trả về
-        // 3. chuyển sang dashboard phù hợp theo role
-        // Ví dụ:
-        // startActivity(new Intent(RegisterActivity.this, ManagerDashboardActivity.class));
-        // finish();
+        if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(RegisterActivity.this, ManagerDashboardActivity.class));
+        } else if ("annotator".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(RegisterActivity.this, AnnotatorOverviewActivity.class));
+        } else if ("reviewer".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(RegisterActivity.this, ReviewerDashboardActivity.class));
+        }
+
+        finish();
     }
 
     private String mapRoleToApiValue(String roleLabel) {

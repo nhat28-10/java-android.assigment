@@ -8,13 +8,15 @@ import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.auth.LoginActivity;
+import com.example.groupassignment.utils.SessionManager;
 
 public class ManagerDashboardActivity extends AppCompatActivity {
 
     private TextView tvWelcomeManager;
     private TextView tvActiveProjects, tvTotalTasks, tvPendingReview, tvApprovalRate;
     private TextView tvInProgressCount, tvPendingCount, tvApprovedCount, tvRejectedCount;
-    private Button btnProjects, btnDatasets;
+    private Button btnProjects, btnDatasets, btnLogout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
 
         btnProjects = findViewById(R.id.btnProjects);
         btnDatasets = findViewById(R.id.btnDatasets);
+        btnLogout = findViewById(R.id.btnLogout);
     }
 
     private void bindMockData() {
@@ -68,5 +71,17 @@ public class ManagerDashboardActivity extends AppCompatActivity {
             Intent intent = new Intent(ManagerDashboardActivity.this, DatasetsActivity.class);
             startActivity(intent);
         });
+
+        btnLogout.setOnClickListener(v -> logout());
+    }
+
+    private void logout() {
+        SessionManager sessionManager = new SessionManager(this);
+        sessionManager.logout();
+
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 }

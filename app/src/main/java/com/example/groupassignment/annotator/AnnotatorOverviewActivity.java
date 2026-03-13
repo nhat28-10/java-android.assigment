@@ -1,4 +1,4 @@
-package com.example.groupassignment.reviewer;
+package com.example.groupassignment.annotator;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,14 +10,14 @@ import com.example.groupassignment.R;
 import com.example.groupassignment.auth.LoginActivity;
 import com.example.groupassignment.utils.SessionManager;
 
-public class ReviewerDashboardActivity extends AppCompatActivity {
+public class AnnotatorOverviewActivity extends AppCompatActivity {
 
     private Button btnLogout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_reviewer_dashboard);
+        setContentView(R.layout.activity_annotator_overview);
 
         btnLogout = findViewById(R.id.btnLogout);
         btnLogout.setOnClickListener(v -> logout());

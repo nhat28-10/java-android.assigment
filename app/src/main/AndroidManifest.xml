@@ -14,11 +14,11 @@
         <activity android:name=".manager.ProjectsActivity" />
         <activity android:name=".manager.DatasetsActivity" />
         <activity android:name=".reviewer.ReviewerDashboardActivity" />
-        <activity android:name=".annotator.AnnotatorDashboardActivity" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".annotator.AnnotatorOverviewActivity" />
+        <activity android:name=".auth.LoginActivity" />
 
         <activity
-            android:name=".auth.LoginActivity"
+            android:name=".SplashActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

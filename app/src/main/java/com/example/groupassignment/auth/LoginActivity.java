@@ -12,6 +12,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.MainActivity;
 import com.example.groupassignment.R;
+import com.example.groupassignment.utils.SessionManager;
+import com.example.groupassignment.manager.ManagerDashboardActivity;
+import com.example.groupassignment.annotator.AnnotatorOverviewActivity;
+import com.example.groupassignment.reviewer.ReviewerDashboardActivity;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -52,17 +56,38 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            edtEmail.setError("Email không hợp lệ");
+            edtEmail.requestFocus();
+            return;
+        }
+
         if (TextUtils.isEmpty(password)) {
             edtPassword.setError("Vui lòng nhập mật khẩu");
             edtPassword.requestFocus();
             return;
         }
 
+        String roleValue = "manager"; // tạm thời hardcode để test
+
+        SessionManager sessionManager = new SessionManager(LoginActivity.this);
+        sessionManager.saveLogin(
+                "demo_token",
+                roleValue,
+                "Demo User",
+                email
+        );
+
         Toast.makeText(this, "Đăng nhập thành công", Toast.LENGTH_SHORT).show();
 
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        intent.putExtra("role", "manager");
-        startActivity(intent);
+        if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(LoginActivity.this, ManagerDashboardActivity.class));
+        } else if ("annotator".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(LoginActivity.this, AnnotatorOverviewActivity.class));
+        } else if ("reviewer".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(LoginActivity.this, ReviewerDashboardActivity.class));
+        }
+
         finish();
     }
 }
