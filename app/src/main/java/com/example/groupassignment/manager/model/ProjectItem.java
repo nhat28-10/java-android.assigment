@@ -6,6 +6,8 @@ import java.util.List;
 
 public class ProjectItem implements Serializable {
 
+    private int id;
+
     private String name;
     private String description;
     private String status;
@@ -42,6 +44,14 @@ public class ProjectItem implements Serializable {
         this.reviewerCount = reviewerCount;
         this.annotatorCount = annotatorCount;
         this.lastUpdated = lastUpdated;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public String getName() {

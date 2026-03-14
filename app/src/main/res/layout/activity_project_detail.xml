@@ -68,13 +68,28 @@
                             android:textSize="14sp" />
                     </LinearLayout>
 
-                    <Button
-                        android:id="@+id/btnEditProjectDetail"
+                    <LinearLayout
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:backgroundTint="#2563EB"
-                        android:text="Edit Project"
-                        android:textColor="@android:color/white" />
+                        android:orientation="horizontal">
+
+                        <Button
+                            android:id="@+id/btnEditProjectDetail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:backgroundTint="#2563EB"
+                            android:text="Edit"
+                            android:textColor="@android:color/white" />
+
+                        <Button
+                            android:id="@+id/btnDeleteProjectDetail"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:backgroundTint="#DC2626"
+                            android:text="Delete"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
                 </LinearLayout>
 
                 <LinearLayout

@@ -1,5 +1,6 @@
 package com.example.groupassignment.manager;
 
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
 
 import java.util.List;
@@ -22,9 +24,14 @@ import java.util.Locale;
 public class ProjectDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_PROJECT_DETAIL = "extra_project_detail";
+    public static final String EXTRA_DETAIL_ACTION = "extra_detail_action";
+
+    public static final String ACTION_UPDATED = "updated";
+    public static final String ACTION_DELETED = "deleted";
 
     private ImageButton btnBackDetail;
     private Button btnEditProjectDetail;
+    private Button btnDeleteProjectDetail;
 
     private TextView tvProjectNameDetail;
     private TextView tvProjectDescriptionDetail;
@@ -46,6 +53,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private LinearLayout layoutReviewersDetail;
 
     private ProjectItem currentProject;
+    private ProjectDbHelper projectDbHelper;
 
     private final ActivityResultLauncher<Intent> editLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -64,15 +72,13 @@ public class ProjectDetailActivity extends AppCompatActivity {
                         );
                     }
 
-                    String mode = data.getStringExtra(ManagerProjectsActivity.EXTRA_PROJECT_MODE);
-
                     if (updatedProject != null) {
                         currentProject = updatedProject;
                         bindProjectData(updatedProject);
 
                         Intent resultIntent = new Intent();
                         resultIntent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, updatedProject);
-                        resultIntent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_MODE, mode);
+                        resultIntent.putExtra(EXTRA_DETAIL_ACTION, ACTION_UPDATED);
                         setResult(RESULT_OK, resultIntent);
 
                         Toast.makeText(this, "Project updated", Toast.LENGTH_SHORT).show();
@@ -85,6 +91,8 @@ public class ProjectDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_detail);
 
+        projectDbHelper = new ProjectDbHelper(this);
+
         initViews();
         readIntentData();
         setupActions();
@@ -94,6 +102,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private void initViews() {
         btnBackDetail = findViewById(R.id.btnBackDetail);
         btnEditProjectDetail = findViewById(R.id.btnEditProjectDetail);
+        btnDeleteProjectDetail = findViewById(R.id.btnDeleteProjectDetail);
 
         tvProjectNameDetail = findViewById(R.id.tvProjectNameDetail);
         tvProjectDescriptionDetail = findViewById(R.id.tvProjectDescriptionDetail);
@@ -143,9 +152,39 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
             Intent intent = new Intent(ProjectDetailActivity.this, CreateProjectActivity.class);
             intent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_MODE, ManagerProjectsActivity.MODE_EDIT);
-            intent.putExtra("project_edit_data", currentProject);
+            intent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, currentProject);
             editLauncher.launch(intent);
         });
+
+        btnDeleteProjectDetail.setOnClickListener(v -> showDeleteConfirmDialog());
+    }
+
+    private void showDeleteConfirmDialog() {
+        if (currentProject == null) return;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete project")
+                .setMessage("Are you sure you want to delete \"" + safeText(currentProject.getName()) + "\"?")
+                .setPositiveButton("Delete", (dialog, which) -> deleteCurrentProject())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void deleteCurrentProject() {
+        if (currentProject == null) return;
+
+        int deletedRows = projectDbHelper.deleteProjectById(currentProject.getId());
+        if (deletedRows > 0) {
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, currentProject);
+            resultIntent.putExtra(EXTRA_DETAIL_ACTION, ACTION_DELETED);
+            setResult(RESULT_OK, resultIntent);
+
+            Toast.makeText(this, "Project deleted", Toast.LENGTH_SHORT).show();
+            finish();
+        } else {
+            Toast.makeText(this, "Delete failed", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void bindProjectData(ProjectItem project) {

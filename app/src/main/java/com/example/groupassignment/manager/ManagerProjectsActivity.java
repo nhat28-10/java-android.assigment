@@ -1,6 +1,7 @@
 package com.example.groupassignment.manager;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
 
 import java.util.ArrayList;
@@ -41,40 +43,44 @@ public class ManagerProjectsActivity extends AppCompatActivity {
     private final List<ProjectItem> allProjects = new ArrayList<>();
     private final List<ProjectItem> filteredProjects = new ArrayList<>();
 
+    private ProjectDbHelper projectDbHelper;
+
     private final ActivityResultLauncher<Intent> projectLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Intent data = result.getData();
 
                     ProjectItem project;
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         project = data.getSerializableExtra(EXTRA_PROJECT_RESULT, ProjectItem.class);
                     } else {
                         project = (ProjectItem) data.getSerializableExtra(EXTRA_PROJECT_RESULT);
                     }
 
                     String mode = data.getStringExtra(EXTRA_PROJECT_MODE);
+                    String detailAction = data.getStringExtra(ProjectDetailActivity.EXTRA_DETAIL_ACTION);
+
+                    if (ProjectDetailActivity.ACTION_DELETED.equals(detailAction) && project != null) {
+                        removeProjectById(project.getId());
+                        showToast("Project deleted");
+                        filterProjects(edtSearchProjects.getText().toString().trim());
+                        return;
+                    }
+
+                    if (ProjectDetailActivity.ACTION_UPDATED.equals(detailAction) && project != null) {
+                        updateExistingProject(project);
+                        showToast("Project updated");
+                        filterProjects(edtSearchProjects.getText().toString().trim());
+                        return;
+                    }
 
                     if (project != null) {
                         if (MODE_EDIT.equals(mode)) {
                             updateExistingProject(project);
                             showToast("Project updated");
-                        } else {
-                            boolean existed = false;
-                            for (int i = 0; i < allProjects.size(); i++) {
-                                ProjectItem current = allProjects.get(i);
-                                if (current.getName() != null &&
-                                        current.getName().equalsIgnoreCase(project.getName())) {
-                                    allProjects.set(i, project);
-                                    existed = true;
-                                    break;
-                                }
-                            }
-
-                            if (!existed) {
-                                allProjects.add(0, project);
-                                showToast("Project created");
-                            }
+                        } else if (MODE_CREATE.equals(mode)) {
+                            addOrReplaceProject(project);
+                            showToast("Project created");
                         }
                         filterProjects(edtSearchProjects.getText().toString().trim());
                     }
@@ -86,10 +92,19 @@ public class ManagerProjectsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_projects);
 
+        projectDbHelper = new ProjectDbHelper(this);
+
         initViews();
-        bindMockProjects();
+        loadProjectsFromDatabase();
         setupActions();
         filterProjects("");
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadProjectsFromDatabase();
+        filterProjects(edtSearchProjects.getText().toString().trim());
     }
 
     private void initViews() {
@@ -124,80 +139,39 @@ public class ManagerProjectsActivity extends AppCompatActivity {
         });
     }
 
-    private void bindMockProjects() {
+    private void loadProjectsFromDatabase() {
         allProjects.clear();
+        allProjects.addAll(projectDbHelper.getAllProjects());
+    }
 
-        ProjectItem p1 = new ProjectItem(
-                "Image Classification",
-                "Label product images for e-commerce catalog.",
-                "active",
-                "pending",
-                3,
-                5,
-                "13 Mar 2026"
-        );
-        p1.setGuidelines("Classify each product into the correct category.");
-        p1.setReviewMode("Full Review");
-        p1.setSampleRate(1.0);
-        p1.setDeadline("20/03/2026");
-        p1.setExportFormat("JSON");
-        p1.getLabels().add("Shoes");
-        p1.getLabels().add("Bags");
-        p1.getDatasets().add("Product Images Batch 01");
-        p1.getAnnotators().add("Nguyen Van A");
-        p1.getAnnotators().add("Tran Thi B");
-        p1.getAnnotators().add("Le Minh C");
-        p1.getAnnotators().add("Pham Quoc D");
-        p1.getAnnotators().add("Hoang Gia E");
-        p1.getReviewers().add("Reviewer Linh");
-        p1.getReviewers().add("Reviewer Khoa");
-        p1.getReviewers().add("Reviewer Trang");
-
-        ProjectItem p2 = new ProjectItem(
-                "Street Object Detection",
-                "Bounding box annotation for urban traffic scenes.",
-                "completed",
-                "approved",
-                5,
-                7,
-                "08 Mar 2026"
-        );
-
-        ProjectItem p3 = new ProjectItem(
-                "Vietnamese Audio Intent",
-                "Intent classification for Vietnamese call-center audio.",
-                "draft",
-                "pending",
-                1,
-                3,
-                "06 Mar 2026"
-        );
-
-        ProjectItem p4 = new ProjectItem(
-                "Customer Review Sentiment",
-                "Sentiment tagging for marketplace review text.",
-                "archived",
-                "rejected",
-                2,
-                5,
-                "01 Mar 2026"
-        );
-
-        allProjects.add(p1);
-        allProjects.add(p2);
-        allProjects.add(p3);
-        allProjects.add(p4);
+    private void addOrReplaceProject(ProjectItem project) {
+        for (int i = 0; i < allProjects.size(); i++) {
+            if (allProjects.get(i).getId() == project.getId()) {
+                allProjects.set(i, project);
+                return;
+            }
+        }
+        allProjects.add(0, project);
     }
 
     private void updateExistingProject(ProjectItem updatedProject) {
         for (int i = 0; i < allProjects.size(); i++) {
             ProjectItem current = allProjects.get(i);
-            if (current.getName() != null && current.getName().equalsIgnoreCase(updatedProject.getName())) {
+            if (current.getId() == updatedProject.getId()) {
                 allProjects.set(i, updatedProject);
                 return;
             }
         }
         allProjects.add(0, updatedProject);
+    }
+
+    private void removeProjectById(int projectId) {
+        for (int i = 0; i < allProjects.size(); i++) {
+            if (allProjects.get(i).getId() == projectId) {
+                allProjects.remove(i);
+                return;
+            }
+        }
     }
 
     private void filterProjects(String keyword) {
@@ -291,13 +265,18 @@ public class ManagerProjectsActivity extends AppCompatActivity {
         chipWrap.setOrientation(LinearLayout.VERTICAL);
         chipWrap.setGravity(Gravity.END);
 
+        String statusText = item.getStatus() == null ? "UNKNOWN" : item.getStatus().toUpperCase(Locale.getDefault());
+        String reviewText = item.getReviewStatus() == null
+                ? "Review: UNKNOWN"
+                : "Review: " + item.getReviewStatus().toUpperCase(Locale.getDefault());
+
         TextView tvStatusChip = buildChip(
-                item.getStatus().toUpperCase(Locale.getDefault()),
+                statusText,
                 getStatusBg(item.getStatus()),
                 getStatusText(item.getStatus())
         );
         TextView tvReviewChip = buildChip(
-                "Review: " + item.getReviewStatus().toUpperCase(Locale.getDefault()),
+                reviewText,
                 getReviewBg(item.getReviewStatus()),
                 getReviewText(item.getReviewStatus())
         );
@@ -327,7 +306,7 @@ public class ManagerProjectsActivity extends AppCompatActivity {
 
         TextView tvReviewer = buildMetaText("Reviewer: " + item.getReviewerCount());
         TextView tvAnnotator = buildMetaText("Annotator: " + item.getAnnotatorCount());
-        TextView tvUpdated = buildMetaText("Last updated: " + item.getLastUpdated());
+        TextView tvUpdated = buildMetaText("Last updated: " + safeText(item.getLastUpdated()));
 
         LinearLayout.LayoutParams itemParams = new LinearLayout.LayoutParams(
                 0,
@@ -354,13 +333,11 @@ public class ManagerProjectsActivity extends AppCompatActivity {
 
         Button btnView = new Button(this);
         btnView.setText("View");
-
         btnView.setTextColor(0xFFFFFFFF);
         btnView.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF374151));
 
         Button btnEdit = new Button(this);
         btnEdit.setText("Edit");
-
         btnEdit.setTextColor(0xFFFFFFFF);
         btnEdit.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF2563EB));
 
@@ -389,11 +366,15 @@ public class ManagerProjectsActivity extends AppCompatActivity {
         btnEdit.setOnClickListener(v -> {
             Intent intent = new Intent(ManagerProjectsActivity.this, CreateProjectActivity.class);
             intent.putExtra(EXTRA_PROJECT_MODE, MODE_EDIT);
-            intent.putExtra("project_edit_data", item);
+            intent.putExtra(EXTRA_PROJECT_RESULT, item);
             projectLauncher.launch(intent);
         });
 
         return card;
+    }
+
+    private String safeText(String text) {
+        return (text == null || text.trim().isEmpty()) ? "Not set" : text;
     }
 
     private TextView buildChip(String text, int bgColor, int textColor) {
@@ -423,6 +404,8 @@ public class ManagerProjectsActivity extends AppCompatActivity {
     }
 
     private int getStatusBg(String status) {
+        if (status == null) return 0x26F59E0B;
+
         switch (status) {
             case "active":
                 return 0x2622C55E;
@@ -436,6 +419,8 @@ public class ManagerProjectsActivity extends AppCompatActivity {
     }
 
     private int getStatusText(String status) {
+        if (status == null) return 0xFFF59E0B;
+
         switch (status) {
             case "active":
                 return 0xFF4ADE80;
@@ -449,6 +434,8 @@ public class ManagerProjectsActivity extends AppCompatActivity {
     }
 
     private int getReviewBg(String status) {
+        if (status == null) return 0x26F59E0B;
+
         switch (status) {
             case "approved":
                 return 0x2610B981;
@@ -460,6 +447,8 @@ public class ManagerProjectsActivity extends AppCompatActivity {
     }
 
     private int getReviewText(String status) {
+        if (status == null) return 0xFFFBBF24;
+
         switch (status) {
             case "approved":
                 return 0xFF34D399;

@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
 
 import java.text.SimpleDateFormat;
@@ -57,10 +58,14 @@ public class CreateProjectActivity extends AppCompatActivity {
     private String screenMode = ManagerProjectsActivity.MODE_CREATE;
     private ProjectItem editingProject;
 
+    private ProjectDbHelper projectDbHelper;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_project);
+
+        projectDbHelper = new ProjectDbHelper(this);
 
         readIntentData();
         initViews();
@@ -82,7 +87,10 @@ public class CreateProjectActivity extends AppCompatActivity {
             if (screenMode == null) {
                 screenMode = ManagerProjectsActivity.MODE_CREATE;
             }
-            editingProject = (ProjectItem) intent.getSerializableExtra("project_edit_data");
+
+            editingProject = (ProjectItem) intent.getSerializableExtra(
+                    ManagerProjectsActivity.EXTRA_PROJECT_RESULT
+            );
         }
     }
 
@@ -137,6 +145,10 @@ public class CreateProjectActivity extends AppCompatActivity {
     }
 
     private void bindMockData() {
+        mockDatasets.clear();
+        mockAnnotators.clear();
+        mockReviewers.clear();
+
         mockDatasets.add("Product Images Batch 01");
         mockDatasets.add("Street Objects Dataset");
         mockDatasets.add("Vietnamese Audio Clips");
@@ -162,7 +174,6 @@ public class CreateProjectActivity extends AppCompatActivity {
         }
 
         edtProjectName.setText(editingProject.getName());
-        edtProjectName.setEnabled(false);
         edtDescription.setText(editingProject.getDescription());
         edtGuidelines.setText(editingProject.getGuidelines());
 
@@ -186,7 +197,8 @@ public class CreateProjectActivity extends AppCompatActivity {
             selectedReviewers.addAll(editingProject.getReviewers());
         }
 
-        if (!TextUtils.isEmpty(editingProject.getDeadline())) {
+        if (!TextUtils.isEmpty(editingProject.getDeadline())
+                && !"Not set".equalsIgnoreCase(editingProject.getDeadline())) {
             isDeadlineSelected = true;
             tvDeadlineValue.setText(editingProject.getDeadline());
         }
@@ -246,7 +258,8 @@ public class CreateProjectActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onNothingSelected(android.widget.AdapterView<?> parent) { }
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
         });
 
         btnSaveDraft.setOnClickListener(v -> saveDraft());
@@ -415,23 +428,39 @@ public class CreateProjectActivity extends AppCompatActivity {
     }
 
     private void saveDraft() {
-        ProjectItem project = buildProjectFromForm("draft");
-        if (project == null) {
-            return;
-        }
-        returnProjectResult(project, ManagerProjectsActivity.MODE_CREATE.equals(screenMode)
-                ? ManagerProjectsActivity.MODE_CREATE
-                : ManagerProjectsActivity.MODE_EDIT);
+        saveProjectToDatabase("draft");
     }
 
     private void createProject() {
-        ProjectItem project = buildProjectFromForm("active");
+        saveProjectToDatabase("active");
+    }
+
+    private void saveProjectToDatabase(String status) {
+        ProjectItem project = buildProjectFromForm(status);
         if (project == null) {
             return;
         }
-        returnProjectResult(project, ManagerProjectsActivity.MODE_CREATE.equals(screenMode)
-                ? ManagerProjectsActivity.MODE_CREATE
-                : ManagerProjectsActivity.MODE_EDIT);
+
+        if (ManagerProjectsActivity.MODE_EDIT.equals(screenMode) && editingProject != null) {
+            project.setId(editingProject.getId());
+
+            int updatedRows = projectDbHelper.updateProject(project);
+            if (updatedRows > 0) {
+                showToast("Cập nhật project thành công");
+                returnProjectResult(project, ManagerProjectsActivity.MODE_EDIT);
+            } else {
+                showToast("Cập nhật project thất bại");
+            }
+        } else {
+            long insertedId = projectDbHelper.insertProject(project);
+            if (insertedId > 0) {
+                project.setId((int) insertedId);
+                showToast("Tạo project thành công");
+                returnProjectResult(project, ManagerProjectsActivity.MODE_CREATE);
+            } else {
+                showToast("Tạo project thất bại");
+            }
+        }
     }
 
     private ProjectItem buildProjectFromForm(String status) {
@@ -502,17 +531,12 @@ public class CreateProjectActivity extends AppCompatActivity {
             sampleRate = 1.0;
         }
 
-        String reviewStatus = "pending";
-        if ("draft".equals(status)) {
-            reviewStatus = "pending";
-        }
-
         ProjectItem project = new ProjectItem();
         project.setName(projectName);
         project.setDescription(description);
         project.setGuidelines(guidelines);
         project.setStatus(status);
-        project.setReviewStatus(reviewStatus);
+        project.setReviewStatus("pending");
         project.setReviewerCount(selectedReviewers.size());
         project.setAnnotatorCount(selectedAnnotators.size());
         project.setLastUpdated(getTodayText());
