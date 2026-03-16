@@ -215,13 +215,17 @@ public class ProjectDetailActivity extends AppCompatActivity {
         tvReviewerCountDetail.setText(String.valueOf(project.getReviewerCount()));
         tvAnnotatorCountDetail.setText(String.valueOf(project.getAnnotatorCount()));
 
-        renderChips(layoutLabelsDetail, project.getLabels(), true);
-        renderChips(layoutDatasetsDetail, project.getDatasets(), false);
-        renderChips(layoutAnnotatorsDetail, project.getAnnotators(), false);
-        renderChips(layoutReviewersDetail, project.getReviewers(), false);
+        renderChips(layoutLabelsDetail, project.getLabels(), true, false, false);
+        renderChips(layoutDatasetsDetail, project.getDatasets(), false, false, false);
+        renderChips(layoutAnnotatorsDetail, project.getAnnotators(), false, true, true);
+        renderChips(layoutReviewersDetail, project.getReviewers(), false, false, false);
     }
 
-    private void renderChips(LinearLayout container, List<String> items, boolean compact) {
+    private void renderChips(LinearLayout container,
+                             List<String> items,
+                             boolean compact,
+                             boolean clickable,
+                             boolean isAnnotatorChip) {
         container.removeAllViews();
 
         if (items == null || items.isEmpty()) {
@@ -235,11 +239,22 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
         for (String item : items) {
             TextView chip = new TextView(this);
-            chip.setText(item);
+
+            if (isAnnotatorChip) {
+                chip.setText(item + "  •  Audit");
+            } else {
+                chip.setText(item);
+            }
+
             chip.setTextColor(0xFFFFFFFF);
             chip.setTextSize(compact ? 12f : 13f);
             chip.setPadding(dp(12), dp(8), dp(12), dp(8));
-            chip.setBackground(makeRoundedDrawable(compact ? 0xFF2563EB : 0xFF334155));
+
+            if (isAnnotatorChip) {
+                chip.setBackground(makeRoundedDrawable(0xFF0F766E));
+            } else {
+                chip.setBackground(makeRoundedDrawable(compact ? 0xFF2563EB : 0xFF334155));
+            }
 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -248,8 +263,27 @@ public class ProjectDetailActivity extends AppCompatActivity {
             params.setMargins(0, 0, dp(8), dp(8));
             chip.setLayoutParams(params);
 
+            if (clickable) {
+                chip.setClickable(true);
+                chip.setFocusable(true);
+                chip.setOnClickListener(v -> openAnnotatorAudit(item));
+            }
+
             container.addView(chip);
         }
+    }
+
+    private void openAnnotatorAudit(String annotatorName) {
+        Intent intent = new Intent(this, AnnotatorAuditDetailActivity.class);
+        intent.putExtra(
+                AnnotatorAuditDetailActivity.EXTRA_PROJECT_NAME,
+                currentProject == null ? "Project" : safeText(currentProject.getName())
+        );
+        intent.putExtra(
+                AnnotatorAuditDetailActivity.EXTRA_ANNOTATOR_NAME,
+                safeText(annotatorName)
+        );
+        startActivity(intent);
     }
 
     private String safeText(String text) {

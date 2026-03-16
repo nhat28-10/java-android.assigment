@@ -19,6 +19,9 @@
         <activity android:name=".manager.CreateProjectActivity"/>
         <activity android:name=".manager.ManagerProjectsActivity" />
         <activity android:name=".manager.ProjectDetailActivity" />
+        <activity android:name=".manager.CreateDatasetActivity" />
+        <activity android:name=".manager.DatasetDetailActivity" />
+        <activity android:name=".manager.AnnotatorAuditDetailActivity" />
 
 
         <activity
