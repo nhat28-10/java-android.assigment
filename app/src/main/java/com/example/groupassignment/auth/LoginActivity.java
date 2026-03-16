@@ -80,6 +80,7 @@ public class LoginActivity extends AppCompatActivity {
 
         SessionManager sessionManager = new SessionManager(LoginActivity.this);
         sessionManager.saveLogin(
+                user.getId(),
                 "demo_token",
                 user.getRole(),
                 user.getFullName(),

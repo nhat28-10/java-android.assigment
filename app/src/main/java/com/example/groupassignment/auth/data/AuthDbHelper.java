@@ -120,6 +120,36 @@ public class AuthDbHelper extends SQLiteOpenHelper {
         return user;
     }
 
+
+    public User getUserByEmail(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(
+                TABLE_USERS,
+                null,
+                COL_EMAIL + "=?",
+                new String[]{email},
+                null,
+                null,
+                null
+        );
+
+        User user = null;
+        if (cursor.moveToFirst()) {
+            long id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID));
+            String fullName = cursor.getString(cursor.getColumnIndexOrThrow(COL_FULL_NAME));
+            String username = cursor.getString(cursor.getColumnIndexOrThrow(COL_USERNAME));
+            String userEmail = cursor.getString(cursor.getColumnIndexOrThrow(COL_EMAIL));
+            String userPassword = cursor.getString(cursor.getColumnIndexOrThrow(COL_PASSWORD));
+            String role = cursor.getString(cursor.getColumnIndexOrThrow(COL_ROLE));
+
+            user = new User(id, fullName, username, userEmail, userPassword, role);
+        }
+
+        cursor.close();
+        db.close();
+        return user;
+    }
     public List<User> getUsersByRole(String role) {
         List<User> users = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
