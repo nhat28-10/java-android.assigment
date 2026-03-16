@@ -34,10 +34,34 @@ android {
 }
 
 dependencies {
+    // AndroidX Core
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+
+    // ViewModel and LiveData
+    implementation(libs.lifecycle.viewmodel)
+    implementation(libs.lifecycle.livedata)
+    implementation(libs.lifecycle.runtime)
+
+    // Navigation
+    implementation(libs.navigation.fragment)
+    implementation(libs.navigation.ui)
+
+    // SQLite
+    implementation(libs.sqlite)
+
+    // RecyclerView
+    implementation(libs.recyclerview)
+
+    // CardView
+    implementation(libs.cardview)
+
+    // SwipeRefreshLayout
+    implementation(libs.swiperefreshlayout)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
