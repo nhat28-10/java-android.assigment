@@ -17,7 +17,7 @@ import java.util.Locale;
 public class DatasetDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String TABLE_DATASETS = "datasets";
 
@@ -31,6 +31,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
     public static final String COL_PENDING_ANNOTATION_ITEMS = "pending_annotation_items";
     public static final String COL_REJECTED_ITEMS = "rejected_items";
     public static final String COL_CREATED_AT = "created_at";
+    public static final String COL_PROJECT_ID = "project_id";
 
     public DatasetDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -45,12 +46,13 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
     public void onOpen(SQLiteDatabase db) {
         super.onOpen(db);
         createDatasetsTableIfNeeded(db);
+        ensureProjectIdColumn(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_DATASETS);
         createDatasetsTableIfNeeded(db);
+        ensureProjectIdColumn(db);
     }
 
     private void createDatasetsTableIfNeeded(SQLiteDatabase db) {
@@ -64,9 +66,29 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
                 + COL_SUBMITTED_ITEMS + " INTEGER DEFAULT 0, "
                 + COL_PENDING_ANNOTATION_ITEMS + " INTEGER DEFAULT 0, "
                 + COL_REJECTED_ITEMS + " INTEGER DEFAULT 0, "
-                + COL_CREATED_AT + " TEXT"
+                + COL_CREATED_AT + " TEXT, "
+                + COL_PROJECT_ID + " INTEGER DEFAULT 0"
                 + ")";
         db.execSQL(createTable);
+    }
+
+    private void ensureProjectIdColumn(SQLiteDatabase db) {
+        boolean hasProjectId = false;
+        Cursor cursor = db.rawQuery("PRAGMA table_info(" + TABLE_DATASETS + ")", null);
+        if (cursor.moveToFirst()) {
+            do {
+                String columnName = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                if (COL_PROJECT_ID.equalsIgnoreCase(columnName)) {
+                    hasProjectId = true;
+                    break;
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        if (!hasProjectId) {
+            db.execSQL("ALTER TABLE " + TABLE_DATASETS + " ADD COLUMN " + COL_PROJECT_ID + " INTEGER DEFAULT 0");
+        }
     }
 
     public long insertDataset(DatasetItem dataset) {
@@ -139,6 +161,89 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         return datasets;
     }
 
+    public List<DatasetItem> getUnassignedDatasets() {
+        return queryDatasetsByProjectSelection(COL_PROJECT_ID + " IS NULL OR " + COL_PROJECT_ID + " = 0", null);
+    }
+
+    public List<DatasetItem> getDatasetsAvailableForProject(int projectId) {
+        String selection = COL_PROJECT_ID + " IS NULL OR " + COL_PROJECT_ID + " = 0 OR " + COL_PROJECT_ID + " = ?";
+        return queryDatasetsByProjectSelection(selection, new String[]{String.valueOf(projectId)});
+    }
+
+    private List<DatasetItem> queryDatasetsByProjectSelection(String selection, String[] selectionArgs) {
+        List<DatasetItem> datasets = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+
+        Cursor cursor = db.query(
+                TABLE_DATASETS,
+                null,
+                selection,
+                selectionArgs,
+                null,
+                null,
+                COL_NAME + " COLLATE NOCASE ASC"
+        );
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                datasets.add(cursorToDataset(cursor));
+            }
+            cursor.close();
+        }
+        return datasets;
+    }
+
+    public void assignDatasetsToProject(List<String> datasetNames, int projectId) {
+        if (datasetNames == null || datasetNames.isEmpty()) {
+            return;
+        }
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_PROJECT_ID, projectId);
+
+        for (String datasetName : datasetNames) {
+            db.update(
+                    TABLE_DATASETS,
+                    values,
+                    COL_NAME + "=?",
+                    new String[]{datasetName}
+            );
+        }
+    }
+
+    public void releaseDatasetsFromProject(int projectId) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_PROJECT_ID, 0);
+
+        db.update(
+                TABLE_DATASETS,
+                values,
+                COL_PROJECT_ID + "=?",
+                new String[]{String.valueOf(projectId)}
+        );
+    }
+
+    public void releaseDatasetsByNames(List<String> datasetNames, int projectId) {
+        if (datasetNames == null || datasetNames.isEmpty()) {
+            return;
+        }
+
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_PROJECT_ID, 0);
+
+        for (String datasetName : datasetNames) {
+            db.update(
+                    TABLE_DATASETS,
+                    values,
+                    COL_NAME + "=? AND " + COL_PROJECT_ID + "=?",
+                    new String[]{datasetName, String.valueOf(projectId)}
+            );
+        }
+    }
+
     public void seedSampleDatasetsIfEmpty() {
         if (!getAllDatasets().isEmpty()) {
             return;
@@ -188,12 +293,12 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         insertDataset(new DatasetItem(
                 0,
                 "Vehicle Images",
-                "Ảnh phương tiện giao thông để gán nhãn object.",
+                "Ảnh phương tiện giao thông để annotate bounding boxes.",
                 "image",
-                300,
-                145,
-                38,
-                117,
+                320,
+                210,
+                30,
+                80,
                 0,
                 now
         ));
@@ -210,6 +315,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         values.put(COL_PENDING_ANNOTATION_ITEMS, dataset.getPendingAnnotationItems());
         values.put(COL_REJECTED_ITEMS, dataset.getRejectedItems());
         values.put(COL_CREATED_AT, dataset.getCreatedAt());
+        values.put(COL_PROJECT_ID, dataset.getProjectId());
         return values;
     }
 
@@ -225,6 +331,11 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         item.setPendingAnnotationItems(cursor.getInt(cursor.getColumnIndexOrThrow(COL_PENDING_ANNOTATION_ITEMS)));
         item.setRejectedItems(cursor.getInt(cursor.getColumnIndexOrThrow(COL_REJECTED_ITEMS)));
         item.setCreatedAt(cursor.getString(cursor.getColumnIndexOrThrow(COL_CREATED_AT)));
+
+        int projectIdIndex = cursor.getColumnIndex(COL_PROJECT_ID);
+        if (projectIdIndex >= 0) {
+            item.setProjectId(cursor.getInt(projectIdIndex));
+        }
         return item;
     }
 

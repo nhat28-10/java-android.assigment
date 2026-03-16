@@ -14,6 +14,7 @@ public class DatasetItem implements Serializable {
     private int pendingAnnotationItems;
     private int rejectedItems;
     private String createdAt;
+    private int projectId;
 
     public DatasetItem() {
     }
@@ -38,6 +39,7 @@ public class DatasetItem implements Serializable {
         this.pendingAnnotationItems = pendingAnnotationItems;
         this.rejectedItems = rejectedItems;
         this.createdAt = createdAt;
+        this.projectId = 0;
     }
 
     public int getId() {
@@ -118,6 +120,18 @@ public class DatasetItem implements Serializable {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getProjectId() {
+        return projectId;
+    }
+
+    public void setProjectId(int projectId) {
+        this.projectId = projectId;
+    }
+
+    public boolean isAssignedToProject() {
+        return projectId > 0;
     }
 
     public int getProgressPercent() {

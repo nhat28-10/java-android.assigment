@@ -16,6 +16,8 @@ import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.ManagerDashboardActivity;
 import com.example.groupassignment.annotator.AnnotatorOverviewActivity;
 import com.example.groupassignment.reviewer.ReviewerDashboardActivity;
+import com.example.groupassignment.auth.data.AuthDbHelper;
+import com.example.groupassignment.auth.model.User;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -68,18 +70,28 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
-        String roleValue = "manager"; // tạm thời hardcode để test
+        AuthDbHelper authDbHelper = new AuthDbHelper(this);
+        User user = authDbHelper.loginUser(email, password);
+
+        if (user == null) {
+            Toast.makeText(this, "Sai email hoặc mật khẩu", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         SessionManager sessionManager = new SessionManager(LoginActivity.this);
         sessionManager.saveLogin(
                 "demo_token",
-                roleValue,
-                "Demo User",
-                email
+                user.getRole(),
+                user.getFullName(),
+                user.getEmail()
         );
 
         Toast.makeText(this, "Đăng nhập thành công", Toast.LENGTH_SHORT).show();
 
+        navigateByRole(user.getRole());
+        finish();
+    }
+    private void navigateByRole(String roleValue) {
         if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
             startActivity(new Intent(LoginActivity.this, ManagerDashboardActivity.class));
         } else if ("annotator".equalsIgnoreCase(roleValue)) {
@@ -87,7 +99,5 @@ public class LoginActivity extends AppCompatActivity {
         } else if ("reviewer".equalsIgnoreCase(roleValue)) {
             startActivity(new Intent(LoginActivity.this, ReviewerDashboardActivity.class));
         }
-
-        finish();
     }
 }

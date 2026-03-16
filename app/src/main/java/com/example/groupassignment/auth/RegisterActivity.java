@@ -16,6 +16,8 @@ import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.ManagerDashboardActivity;
 import com.example.groupassignment.annotator.AnnotatorOverviewActivity;
 import com.example.groupassignment.reviewer.ReviewerDashboardActivity;
+import com.example.groupassignment.auth.data.AuthDbHelper;
+import com.example.groupassignment.auth.model.User;
 
 public class RegisterActivity extends AppCompatActivity {
 
@@ -126,6 +128,22 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
+        AuthDbHelper authDbHelper = new AuthDbHelper(this);
+
+        if (authDbHelper.isEmailExists(email)) {
+            edtEmail.setError("Email already exists");
+            edtEmail.requestFocus();
+            return;
+        }
+
+        User user = new User(fullName, username, email, password, roleValue);
+        long result = authDbHelper.registerUser(user);
+
+        if (result == -1) {
+            Toast.makeText(this, "Register failed", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         SessionManager sessionManager = new SessionManager(RegisterActivity.this);
         sessionManager.saveLogin(
                 "demo_token",
@@ -134,20 +152,9 @@ public class RegisterActivity extends AppCompatActivity {
                 email
         );
 
-        Toast.makeText(
-                this,
-                "Register success\nRole: " + roleValue,
-                Toast.LENGTH_SHORT
-        ).show();
+        Toast.makeText(this, "Register success\nRole: " + roleValue, Toast.LENGTH_SHORT).show();
 
-        if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(RegisterActivity.this, ManagerDashboardActivity.class));
-        } else if ("annotator".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(RegisterActivity.this, AnnotatorOverviewActivity.class));
-        } else if ("reviewer".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(RegisterActivity.this, ReviewerDashboardActivity.class));
-        }
-
+        navigateByRole(roleValue);
         finish();
     }
 
@@ -156,5 +163,14 @@ public class RegisterActivity extends AppCompatActivity {
         if ("Reviewer".equalsIgnoreCase(roleLabel)) return "reviewer";
         if ("Manager".equalsIgnoreCase(roleLabel)) return "manager";
         return "annotator";
+    }
+    private void navigateByRole(String roleValue) {
+        if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(RegisterActivity.this, ManagerDashboardActivity.class));
+        } else if ("annotator".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(RegisterActivity.this, AnnotatorOverviewActivity.class));
+        } else if ("reviewer".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(RegisterActivity.this, ReviewerDashboardActivity.class));
+        }
     }
 }

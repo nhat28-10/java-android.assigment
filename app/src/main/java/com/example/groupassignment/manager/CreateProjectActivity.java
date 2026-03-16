@@ -20,12 +20,17 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.auth.data.AuthDbHelper;
+import com.example.groupassignment.auth.model.User;
+import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.data.ProjectDbHelper;
+import com.example.groupassignment.manager.model.DatasetItem;
 import com.example.groupassignment.manager.model.ProjectItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,9 +53,9 @@ public class CreateProjectActivity extends AppCompatActivity {
     private final List<String> selectedAnnotators = new ArrayList<>();
     private final List<String> selectedReviewers = new ArrayList<>();
 
-    private final List<String> mockDatasets = new ArrayList<>();
-    private final List<String> mockAnnotators = new ArrayList<>();
-    private final List<String> mockReviewers = new ArrayList<>();
+    private final List<String> availableDatasets = new ArrayList<>();
+    private final List<String> availableAnnotators = new ArrayList<>();
+    private final List<String> availableReviewers = new ArrayList<>();
 
     private final Calendar deadlineCalendar = Calendar.getInstance();
     private boolean isDeadlineSelected = false;
@@ -59,6 +64,8 @@ public class CreateProjectActivity extends AppCompatActivity {
     private ProjectItem editingProject;
 
     private ProjectDbHelper projectDbHelper;
+    private DatasetDbHelper datasetDbHelper;
+    private AuthDbHelper authDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,11 +73,14 @@ public class CreateProjectActivity extends AppCompatActivity {
         setContentView(R.layout.activity_create_project);
 
         projectDbHelper = new ProjectDbHelper(this);
+        datasetDbHelper = new DatasetDbHelper(this);
+        authDbHelper = new AuthDbHelper(this);
+        datasetDbHelper.seedSampleDatasetsIfEmpty();
 
         readIntentData();
         initViews();
         setupSpinners();
-        bindMockData();
+        loadDataFromSQLite();
         renderDatasets();
         renderAnnotators();
         renderReviewers();
@@ -144,27 +154,61 @@ public class CreateProjectActivity extends AppCompatActivity {
         spinnerExportFormat.setAdapter(exportAdapter);
     }
 
-    private void bindMockData() {
-        mockDatasets.clear();
-        mockAnnotators.clear();
-        mockReviewers.clear();
+    private void loadDataFromSQLite() {
+        loadDatasetsFromDb();
+        loadAnnotatorsFromDb();
+        loadReviewersFromDb();
+    }
 
-        mockDatasets.add("Product Images Batch 01");
-        mockDatasets.add("Street Objects Dataset");
-        mockDatasets.add("Vietnamese Audio Clips");
-        mockDatasets.add("Customer Reviews Text");
+    private void loadDatasetsFromDb() {
+        availableDatasets.clear();
 
-        mockAnnotators.add("Nguyen Van A");
-        mockAnnotators.add("Tran Thi B");
-        mockAnnotators.add("Le Minh C");
-        mockAnnotators.add("Pham Quoc D");
-        mockAnnotators.add("Hoang Gia E");
+        List<DatasetItem> datasetItems;
+        if (ManagerProjectsActivity.MODE_EDIT.equals(screenMode) && editingProject != null) {
+            datasetItems = datasetDbHelper.getDatasetsAvailableForProject(editingProject.getId());
+        } else {
+            datasetItems = datasetDbHelper.getUnassignedDatasets();
+        }
 
-        mockReviewers.add("Reviewer Linh");
-        mockReviewers.add("Reviewer Khoa");
-        mockReviewers.add("Reviewer Trang");
-        mockReviewers.add("Reviewer Nam");
-        mockReviewers.add("Reviewer Phuc");
+        if (datasetItems != null) {
+            for (DatasetItem item : datasetItems) {
+                if (item != null && !TextUtils.isEmpty(item.getName())) {
+                    availableDatasets.add(item.getName());
+                }
+            }
+        }
+
+        Collections.sort(availableDatasets, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private void loadAnnotatorsFromDb() {
+        availableAnnotators.clear();
+        List<User> users = authDbHelper.getUsersByRole("annotator");
+
+        if (users != null) {
+            for (User user : users) {
+                if (user != null && !TextUtils.isEmpty(user.getFullName())) {
+                    availableAnnotators.add(user.getFullName());
+                }
+            }
+        }
+
+        Collections.sort(availableAnnotators, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private void loadReviewersFromDb() {
+        availableReviewers.clear();
+        List<User> users = authDbHelper.getUsersByRole("reviewer");
+
+        if (users != null) {
+            for (User user : users) {
+                if (user != null && !TextUtils.isEmpty(user.getFullName())) {
+                    availableReviewers.add(user.getFullName());
+                }
+            }
+        }
+
+        Collections.sort(availableReviewers, String.CASE_INSENSITIVE_ORDER);
     }
 
     private void populateEditDataIfNeeded() {
@@ -185,6 +229,11 @@ public class CreateProjectActivity extends AppCompatActivity {
         selectedDatasets.clear();
         if (editingProject.getDatasets() != null) {
             selectedDatasets.addAll(editingProject.getDatasets());
+            for (String datasetName : editingProject.getDatasets()) {
+                if (!availableDatasets.contains(datasetName)) {
+                    availableDatasets.add(datasetName);
+                }
+            }
         }
 
         selectedAnnotators.clear();
@@ -223,6 +272,7 @@ public class CreateProjectActivity extends AppCompatActivity {
             }
         }
 
+        Collections.sort(availableDatasets, String.CASE_INSENSITIVE_ORDER);
         renderLabels();
         renderDatasets();
         renderAnnotators();
@@ -317,7 +367,15 @@ public class CreateProjectActivity extends AppCompatActivity {
     private void renderDatasets() {
         layoutDatasetContainer.removeAllViews();
 
-        for (String dataset : mockDatasets) {
+        if (availableDatasets.isEmpty()) {
+            TextView emptyView = new TextView(this);
+            emptyView.setText("Chưa có dataset khả dụng");
+            emptyView.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            layoutDatasetContainer.addView(emptyView);
+            return;
+        }
+
+        for (String dataset : availableDatasets) {
             CheckBox checkBox = buildCheckBox(dataset);
             checkBox.setChecked(selectedDatasets.contains(dataset));
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -337,7 +395,15 @@ public class CreateProjectActivity extends AppCompatActivity {
     private void renderAnnotators() {
         layoutAnnotatorContainer.removeAllViews();
 
-        for (String annotator : mockAnnotators) {
+        if (availableAnnotators.isEmpty()) {
+            TextView emptyView = new TextView(this);
+            emptyView.setText("Chưa có annotator nào");
+            emptyView.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            layoutAnnotatorContainer.addView(emptyView);
+            return;
+        }
+
+        for (String annotator : availableAnnotators) {
             CheckBox checkBox = buildCheckBox(annotator);
             checkBox.setChecked(selectedAnnotators.contains(annotator));
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -357,7 +423,15 @@ public class CreateProjectActivity extends AppCompatActivity {
     private void renderReviewers() {
         layoutReviewerContainer.removeAllViews();
 
-        for (String reviewer : mockReviewers) {
+        if (availableReviewers.isEmpty()) {
+            TextView emptyView = new TextView(this);
+            emptyView.setText("Chưa có reviewer nào");
+            emptyView.setTextColor(getResources().getColor(android.R.color.darker_gray));
+            layoutReviewerContainer.addView(emptyView);
+            return;
+        }
+
+        for (String reviewer : availableReviewers) {
             CheckBox checkBox = buildCheckBox(reviewer);
             checkBox.setChecked(selectedReviewers.contains(reviewer));
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -444,17 +518,22 @@ public class CreateProjectActivity extends AppCompatActivity {
         if (ManagerProjectsActivity.MODE_EDIT.equals(screenMode) && editingProject != null) {
             project.setId(editingProject.getId());
 
+            datasetDbHelper.releaseDatasetsByNames(editingProject.getDatasets(), editingProject.getId());
+
             int updatedRows = projectDbHelper.updateProject(project);
             if (updatedRows > 0) {
+                datasetDbHelper.assignDatasetsToProject(project.getDatasets(), project.getId());
                 showToast("Cập nhật project thành công");
                 returnProjectResult(project, ManagerProjectsActivity.MODE_EDIT);
             } else {
+                datasetDbHelper.assignDatasetsToProject(editingProject.getDatasets(), editingProject.getId());
                 showToast("Cập nhật project thất bại");
             }
         } else {
             long insertedId = projectDbHelper.insertProject(project);
             if (insertedId > 0) {
                 project.setId((int) insertedId);
+                datasetDbHelper.assignDatasetsToProject(project.getDatasets(), project.getId());
                 showToast("Tạo project thành công");
                 returnProjectResult(project, ManagerProjectsActivity.MODE_CREATE);
             } else {
