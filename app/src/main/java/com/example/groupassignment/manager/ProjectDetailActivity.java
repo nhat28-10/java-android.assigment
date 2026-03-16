@@ -18,6 +18,7 @@ import com.example.groupassignment.R;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
+import com.example.groupassignment.reviewer.data.TaskDbHelper;
 
 import java.util.List;
 import java.util.Locale;
@@ -56,6 +57,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
     private ProjectItem currentProject;
     private ProjectDbHelper projectDbHelper;
     private DatasetDbHelper datasetDbHelper;
+    private TaskDbHelper taskDbHelper;
 
     private final ActivityResultLauncher<Intent> editLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -95,6 +97,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
         projectDbHelper = new ProjectDbHelper(this);
         datasetDbHelper = new DatasetDbHelper(this);
+        taskDbHelper = new TaskDbHelper(this);
 
         initViews();
         readIntentData();
@@ -183,6 +186,8 @@ public class ProjectDetailActivity extends AppCompatActivity {
             } else {
                 datasetDbHelper.releaseDatasetsByNames(currentProject.getDatasets(), currentProject.getId());
             }
+            taskDbHelper.deleteTasksByProjectId(currentProject.getId());
+
             Intent resultIntent = new Intent();
             resultIntent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, currentProject);
             resultIntent.putExtra(EXTRA_DETAIL_ACTION, ACTION_DELETED);

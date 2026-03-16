@@ -26,6 +26,7 @@ import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
 import com.example.groupassignment.manager.model.ProjectItem;
+import com.example.groupassignment.reviewer.data.TaskDbHelper;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -80,6 +81,7 @@ public class CreateProjectActivity extends AppCompatActivity {
     private ProjectDbHelper projectDbHelper;
     private DatasetDbHelper datasetDbHelper;
     private AuthDbHelper authDbHelper;
+    private TaskDbHelper taskDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,6 +91,7 @@ public class CreateProjectActivity extends AppCompatActivity {
         projectDbHelper = new ProjectDbHelper(this);
         datasetDbHelper = new DatasetDbHelper(this);
         authDbHelper = new AuthDbHelper(this);
+        taskDbHelper = new TaskDbHelper(this);
         datasetDbHelper.seedSampleDatasetsIfEmpty();
 
         readIntentData();
@@ -633,6 +636,7 @@ public class CreateProjectActivity extends AppCompatActivity {
             int updatedRows = projectDbHelper.updateProject(project);
             if (updatedRows > 0) {
                 datasetDbHelper.assignDatasetsToProjectByIds(project.getDatasetIds(), project.getId());
+                taskDbHelper.syncTasksForProject(project);
                 showToast("Cập nhật project thành công");
                 returnProjectResult(project, ManagerProjectsActivity.MODE_EDIT);
             } else {
@@ -644,6 +648,7 @@ public class CreateProjectActivity extends AppCompatActivity {
             if (insertedId > 0) {
                 project.setId((int) insertedId);
                 datasetDbHelper.assignDatasetsToProjectByIds(project.getDatasetIds(), project.getId());
+                taskDbHelper.syncTasksForProject(project);
                 showToast("Tạo project thành công");
                 returnProjectResult(project, ManagerProjectsActivity.MODE_CREATE);
             } else {

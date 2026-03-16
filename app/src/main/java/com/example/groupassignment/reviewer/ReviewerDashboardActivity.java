@@ -89,7 +89,7 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
         tvWelcomeReviewer.setText("Welcome back, " + reviewerName);
 
         int reviewerId = getCurrentReviewerId();
-        taskDbHelper.seedDemoTasksIfEmpty();
+        taskDbHelper.ensureReviewerTasksSeeded(reviewerId);
 
         List<TaskItem> allTasks = taskDbHelper.getTasksForReviewer(reviewerId);
         List<TaskItem> pendingTasks = taskDbHelper.getPendingReviewTasksForReviewer(reviewerId);

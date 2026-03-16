@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.groupassignment.R;
 import com.example.groupassignment.reviewer.data.TaskDbHelper;
 import com.example.groupassignment.reviewer.model.TaskItem;
+import com.example.groupassignment.utils.SessionManager;
 
 public class ReviewerTaskActivity extends AppCompatActivity {
 
@@ -35,6 +36,8 @@ public class ReviewerTaskActivity extends AppCompatActivity {
     private TaskDbHelper taskDbHelper;
     private int taskId;
     private TaskItem taskItem;
+    private SessionManager sessionManager;
+    private int currentReviewerId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,6 +45,8 @@ public class ReviewerTaskActivity extends AppCompatActivity {
         setContentView(R.layout.activity_reviewer_task);
 
         taskDbHelper = new TaskDbHelper(this);
+        sessionManager = new SessionManager(this);
+        currentReviewerId = (int) sessionManager.getUserId();
         taskId = getIntent().getIntExtra(EXTRA_TASK_ID, -1);
 
         initViews();
@@ -80,6 +85,12 @@ public class ReviewerTaskActivity extends AppCompatActivity {
         taskItem = taskDbHelper.getTaskById(taskId);
         if (taskItem == null) {
             Toast.makeText(this, "Không tìm thấy task", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        if (currentReviewerId > 0 && taskItem.getReviewerId() != currentReviewerId) {
+            Toast.makeText(this, "Bạn không có quyền xem task này", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
