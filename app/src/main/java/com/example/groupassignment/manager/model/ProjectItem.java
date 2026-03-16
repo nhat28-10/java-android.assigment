@@ -26,12 +26,18 @@ public class ProjectItem implements Serializable {
     private List<String> datasets;
     private List<String> annotators;
     private List<String> reviewers;
+    private List<Integer> datasetIds;
+    private List<Integer> annotatorIds;
+    private List<Integer> reviewerIds;
 
     public ProjectItem() {
         labels = new ArrayList<>();
         datasets = new ArrayList<>();
         annotators = new ArrayList<>();
         reviewers = new ArrayList<>();
+        datasetIds = new ArrayList<>();
+        annotatorIds = new ArrayList<>();
+        reviewerIds = new ArrayList<>();
     }
 
     public ProjectItem(String name, String description, String status, String reviewStatus,
@@ -180,5 +186,29 @@ public class ProjectItem implements Serializable {
 
     public void setReviewers(List<String> reviewers) {
         this.reviewers = reviewers;
+    }
+
+    public List<Integer> getDatasetIds() {
+        return datasetIds;
+    }
+
+    public void setDatasetIds(List<Integer> datasetIds) {
+        this.datasetIds = datasetIds;
+    }
+
+    public List<Integer> getAnnotatorIds() {
+        return annotatorIds;
+    }
+
+    public void setAnnotatorIds(List<Integer> annotatorIds) {
+        this.annotatorIds = annotatorIds;
+    }
+
+    public List<Integer> getReviewerIds() {
+        return reviewerIds;
+    }
+
+    public void setReviewerIds(List<Integer> reviewerIds) {
+        this.reviewerIds = reviewerIds;
     }
 }

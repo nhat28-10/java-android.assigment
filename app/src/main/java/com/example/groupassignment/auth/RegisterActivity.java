@@ -3,19 +3,16 @@ package com.example.groupassignment.auth;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.example.groupassignment.R;
+
 import androidx.appcompat.app.AppCompatActivity;
-import com.example.groupassignment.utils.SessionManager;
-import com.example.groupassignment.manager.ManagerDashboardActivity;
-import com.example.groupassignment.annotator.AnnotatorOverviewActivity;
-import com.example.groupassignment.reviewer.ReviewerDashboardActivity;
+
+import com.example.groupassignment.R;
 import com.example.groupassignment.auth.data.AuthDbHelper;
 import com.example.groupassignment.auth.model.User;
 
@@ -144,17 +141,8 @@ public class RegisterActivity extends AppCompatActivity {
             return;
         }
 
-        SessionManager sessionManager = new SessionManager(RegisterActivity.this);
-        sessionManager.saveLogin(
-                "demo_token",
-                roleValue,
-                fullName,
-                email
-        );
-
-        Toast.makeText(this, "Register success\nRole: " + roleValue, Toast.LENGTH_SHORT).show();
-
-        navigateByRole(roleValue);
+        Toast.makeText(this, "Register success. Please login.", Toast.LENGTH_SHORT).show();
+        startActivity(new Intent(RegisterActivity.this, LoginActivity.class));
         finish();
     }
 
@@ -163,14 +151,5 @@ public class RegisterActivity extends AppCompatActivity {
         if ("Reviewer".equalsIgnoreCase(roleLabel)) return "reviewer";
         if ("Manager".equalsIgnoreCase(roleLabel)) return "manager";
         return "annotator";
-    }
-    private void navigateByRole(String roleValue) {
-        if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(RegisterActivity.this, ManagerDashboardActivity.class));
-        } else if ("annotator".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(RegisterActivity.this, AnnotatorOverviewActivity.class));
-        } else if ("reviewer".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(RegisterActivity.this, ReviewerDashboardActivity.class));
-        }
     }
 }
