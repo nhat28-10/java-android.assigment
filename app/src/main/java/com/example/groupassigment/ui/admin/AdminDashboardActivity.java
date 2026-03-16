@@ -9,11 +9,12 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.groupassigment.R;
 import com.example.groupassigment.repository.UserRepository;
+import com.example.groupassigment.ui.login.LoginActivity;
 import com.example.groupassigment.utils.SessionManager;
 
 public class AdminDashboardActivity extends AppCompatActivity {
     private TextView tvWelcome, tvUserCount;
-    private Button btnUserManagement;
+    private Button btnUserManagement, btnLogout;
     private SessionManager sessionManager;
     private UserRepository userRepository;
 
@@ -26,33 +27,46 @@ public class AdminDashboardActivity extends AppCompatActivity {
         userRepository = new UserRepository(this);
 
         if (!sessionManager.isLoggedIn() || !sessionManager.isAdmin()) {
-            Toast.makeText(this, " Access denied\, Toast.LENGTH_SHORT).show();
- finish();
- return;
- }
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
- tvWelcome = findViewById(R.id.tvWelcome);
- tvUserCount = findViewById(R.id.tvUserCount);
- btnUserManagement = findViewById(R.id.btnUserManagement);
+        tvWelcome = findViewById(R.id.tvWelcome);
+        tvUserCount = findViewById(R.id.tvUserCount);
+        btnUserManagement = findViewById(R.id.btnUserManagement);
+        btnLogout = findViewById(R.id.btnLogout);
 
- btnUserManagement.setOnClickListener(new View.OnClickListener() {
- @Override
- public void onClick(View v) {
- startActivity(new Intent(AdminDashboardActivity.this, UserManagementActivity.class));
- }
- });
+        btnUserManagement.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(AdminDashboardActivity.this, UserManagementActivity.class));
+            }
+        });
 
- loadDashboard();
- }
+        btnLogout.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sessionManager.logout();
+                Toast.makeText(AdminDashboardActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(AdminDashboardActivity.this, LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                finish();
+            }
+        });
 
- @Override
- protected void onResume() {
- super.onResume();
- loadDashboard();
- }
+        loadDashboard();
+    }
 
- private void loadDashboard() {
- tvWelcome.setText(\Welcome \ + sessionManager.getCurrentUser().getFullName());
- tvUserCount.setText(\Total Users: \ + userRepository.getUserCount());
- }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadDashboard();
+    }
+
+    private void loadDashboard() {
+        tvWelcome.setText("Welcome " + sessionManager.getCurrentUser().getFullName());
+        tvUserCount.setText("Total Users: " + userRepository.getUserCount());
+    }
 }

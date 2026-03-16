@@ -1,1 +1,82 @@
-<?xml version=" 1.0\ encoding=\utf-8\?>\n<ScrollView xmlns:android=\http://schemas.android.com/apk/res/android\\n android:layout_width=\match_parent\\n android:layout_height=\match_parent\\n android:padding=\16dp\\n android:background=\#F5F5F5\>\n\n <LinearLayout\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:orientation=\vertical\>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Create New User\\n android:textSize=\24sp\\n android:textStyle=\bold\\n android:textColor=\#000000\\n android:layout_marginBottom=\24dp\/>\n\n <EditText\n android:id=\@+id/etUsername\\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:hint=\Username *\\n android:inputType=\text\\n android:padding=\12dp\\n android:background=\@android:drawable/edit_text\\n android:layout_marginBottom=\12dp\/>\n\n <EditText\n android:id=\@+id/etPassword\\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:hint=\Password *\\n android:inputType=\textPassword\\n android:padding=\12dp\\n android:background=\@android:drawable/edit_text\\n android:layout_marginBottom=\12dp\/>\n\n <EditText\n android:id=\@+id/etFullName\\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:hint=\Full Name *\\n android:inputType=\textPersonName\\n android:padding=\12dp\\n android:background=\@android:drawable/edit_text\\n android:layout_marginBottom=\12dp\/>\n\n <EditText\n android:id=\@+id/etEmail\\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:hint=\Email\\n android:inputType=\textEmailAddress\\n android:padding=\12dp\\n android:background=\@android:drawable/edit_text\\n android:layout_marginBottom=\12dp\/>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Role\\n android:textSize=\14sp\\n android:layout_marginBottom=\8dp\/>\n\n <Spinner\n android:id=\@+id/spRole\\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:padding=\12dp\\n android:layout_marginBottom=\24dp\/>\n\n <Button\n android:id=\@+id/btnSave\\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:text=\Create User\\n android:textColor=\#FFFFFF\\n android:background=\#6200EE\\n android:padding=\12dp\/>\n\n </LinearLayout>\n</ScrollView>
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Create New User"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="#000000"
+            android:layout_marginBottom="24dp" />
+
+        <EditText
+            android:id="@+id/etUsername"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Username *"
+            android:inputType="text"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Password *"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etFullName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Full Name *"
+            android:inputType="textPersonName"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Role"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/spRole"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="12dp"
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Create User"
+            android:textColor="#FFFFFF"
+            android:background="#6200EE"
+            android:padding="12dp" />
+
+    </LinearLayout>
+</ScrollView>

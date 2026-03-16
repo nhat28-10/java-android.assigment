@@ -1,2 +1,155 @@
-<?xml version=" 1.0\ encoding=\utf-8\?>
-<LinearLayout xmlns:android=\http://schemas.android.com/apk/res/android\\n android:layout_width=\match_parent\\n android:layout_height=\match_parent\\n android:orientation=\vertical\\n android:padding=\16dp\\n android:background=\#F5F5F5\>\n\n <TextView\n android:id=\@+id/tvWelcome\\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Admin Dashboard\\n android:textSize=\24sp\\n android:textStyle=\bold\\n android:textColor=\#000000\\n android:layout_marginBottom=\24dp\/>\n\n <androidx.cardview.widget.CardView\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:layout_marginBottom=\16dp\>\n\n <LinearLayout\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:orientation=\vertical\\n android:padding=\16dp\>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\User Management\\n android:textSize=\18sp\\n android:textStyle=\bold\/>\n\n <TextView\n android:id=\@+id/tvUserCount\\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Total Users: 0\\n android:textSize=\14sp\\n android:layout_marginTop=\8dp\/>\n\n <Button\n android:id=\@+id/btnUserManagement\\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Manage Users\\n android:layout_marginTop=\12dp\/>\n\n </LinearLayout>\n </androidx.cardview.widget.CardView>\n\n <androidx.cardview.widget.CardView\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:layout_marginBottom=\16dp\>\n\n <LinearLayout\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:orientation=\vertical\\n android:padding=\16dp\>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\System Configuration\\n android:textSize=\18sp\\n android:textStyle=\bold\/>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Manage system settings and configurations\\n android:textSize=\14sp\\n android:layout_marginTop=\8dp\/>\n\n </LinearLayout>\n </androidx.cardview.widget.CardView>\n\n <androidx.cardview.widget.CardView\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\>\n\n <LinearLayout\n android:layout_width=\match_parent\\n android:layout_height=\wrap_content\\n android:orientation=\vertical\\n android:padding=\16dp\>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Workload Management\\n android:textSize=\18sp\\n android:textStyle=\bold\/>\n\n <TextView\n android:layout_width=\wrap_content\\n android:layout_height=\wrap_content\\n android:text=\Monitor and manage workload across users\\n android:textSize=\14sp\\n android:layout_marginTop=\8dp\/>\n\n </LinearLayout>\n </androidx.cardview.widget.CardView>\n\n</LinearLayout>
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F5F5F5">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#6200EE"
+        android:padding="16dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/tvWelcome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Admin Dashboard"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+
+        <Button
+            android:id="@+id/btnLogout"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Logout"
+            android:textColor="#FFFFFF"
+            android:background="#7E57C2"
+            android:padding="8dp" />
+
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="User Management"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/tvUserCount"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total Users: 0"
+                        android:textSize="14sp"
+                        android:layout_marginTop="8dp" />
+
+                    <Button
+                        android:id="@+id/btnUserManagement"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Manage Users"
+                        android:layout_marginTop="12dp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="System Configuration"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Manage system settings and configurations"
+                        android:textSize="14sp"
+                        android:layout_marginTop="8dp" />
+
+                    <Button
+                        android:id="@+id/btnSystemConfig"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Settings"
+                        android:layout_marginTop="12dp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Workload Management"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Monitor and manage workload across users"
+                        android:textSize="14sp"
+                        android:layout_marginTop="8dp" />
+
+                    <Button
+                        android:id="@+id/btnWorkload"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="View Workload"
+                        android:layout_marginTop="12dp" />
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

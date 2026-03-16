@@ -26,42 +26,42 @@ public class ProjectManagementActivity extends AppCompatActivity {
         projectRepository = new ProjectRepository(this);
 
         if (!sessionManager.isLoggedIn() || !sessionManager.isManager()) {
-            Toast.makeText(this, " Access denied\, Toast.LENGTH_SHORT).show();
- finish();
- return;
- }
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
- etProjectName = findViewById(R.id.etProjectName);
- etProjectDescription = findViewById(R.id.etProjectDescription);
- btnCreateProject = findViewById(R.id.btnCreateProject);
+        etProjectName = findViewById(R.id.etProjectName);
+        etProjectDescription = findViewById(R.id.etProjectDescription);
+        btnCreateProject = findViewById(R.id.btnCreateProject);
 
- btnCreateProject.setOnClickListener(new View.OnClickListener() {
- @Override
- public void onClick(View v) { createProject(); }
- });
- }
+        btnCreateProject.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) { createProject(); }
+        });
+    }
 
- private void createProject() {
- String name = etProjectName.getText().toString().trim();
- String description = etProjectDescription.getText().toString().trim();
+    private void createProject() {
+        String name = etProjectName.getText().toString().trim();
+        String description = etProjectDescription.getText().toString().trim();
 
- if (name.isEmpty()) {
- etProjectName.setError(\Project name is required\);
- return;
- }
+        if (name.isEmpty()) {
+            etProjectName.setError("Project name is required");
+            return;
+        }
 
- Project project = new Project();
- project.setName(name);
- project.setDescription(description);
- project.setManagerId(sessionManager.getUserId());
- project.setStatus(\ACTIVE\);
+        Project project = new Project();
+        project.setName(name);
+        project.setDescription(description);
+        project.setManagerId(sessionManager.getUserId());
+        project.setStatus("ACTIVE");
 
- long id = projectRepository.insertProject(project);
- if (id > 0) {
- Toast.makeText(this, \Project created successfully\, Toast.LENGTH_SHORT).show();
- finish();
- } else {
- Toast.makeText(this, \Failed to create project\, Toast.LENGTH_SHORT).show();
- }
- }
+        long id = projectRepository.insertProject(project);
+        if (id > 0) {
+            Toast.makeText(this, "Project created successfully", Toast.LENGTH_SHORT).show();
+            finish();
+        } else {
+            Toast.makeText(this, "Failed to create project", Toast.LENGTH_SHORT).show();
+        }
+    }
 }
