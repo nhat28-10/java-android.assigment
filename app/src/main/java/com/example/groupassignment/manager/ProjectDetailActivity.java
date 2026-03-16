@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
 
@@ -54,6 +55,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
     private ProjectItem currentProject;
     private ProjectDbHelper projectDbHelper;
+    private DatasetDbHelper datasetDbHelper;
 
     private final ActivityResultLauncher<Intent> editLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
@@ -92,6 +94,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
         setContentView(R.layout.activity_project_detail);
 
         projectDbHelper = new ProjectDbHelper(this);
+        datasetDbHelper = new DatasetDbHelper(this);
 
         initViews();
         readIntentData();
@@ -175,6 +178,11 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
         int deletedRows = projectDbHelper.deleteProjectById(currentProject.getId());
         if (deletedRows > 0) {
+            if (currentProject.getDatasetIds() != null && !currentProject.getDatasetIds().isEmpty()) {
+                datasetDbHelper.releaseDatasetsByIds(currentProject.getDatasetIds(), currentProject.getId());
+            } else {
+                datasetDbHelper.releaseDatasetsByNames(currentProject.getDatasets(), currentProject.getId());
+            }
             Intent resultIntent = new Intent();
             resultIntent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, currentProject);
             resultIntent.putExtra(EXTRA_DETAIL_ACTION, ACTION_DELETED);

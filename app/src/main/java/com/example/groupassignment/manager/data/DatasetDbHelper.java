@@ -198,16 +198,45 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
             return;
         }
 
+        List<Integer> datasetIds = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        for (String datasetName : datasetNames) {
+            Cursor cursor = db.query(
+                    TABLE_DATASETS,
+                    new String[]{COL_ID},
+                    COL_NAME + "=?",
+                    new String[]{datasetName},
+                    null,
+                    null,
+                    null
+            );
+            if (cursor.moveToFirst()) {
+                datasetIds.add(cursor.getInt(cursor.getColumnIndexOrThrow(COL_ID)));
+            }
+            cursor.close();
+        }
+
+        assignDatasetsToProjectByIds(datasetIds, projectId);
+    }
+
+    public void assignDatasetsToProjectByIds(List<Integer> datasetIds, int projectId) {
+        if (datasetIds == null || datasetIds.isEmpty()) {
+            return;
+        }
+
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_PROJECT_ID, projectId);
 
-        for (String datasetName : datasetNames) {
+        for (Integer datasetId : datasetIds) {
+            if (datasetId == null) {
+                continue;
+            }
             db.update(
                     TABLE_DATASETS,
                     values,
-                    COL_NAME + "=?",
-                    new String[]{datasetName}
+                    COL_ID + "=?",
+                    new String[]{String.valueOf(datasetId)}
             );
         }
     }
@@ -230,16 +259,45 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
             return;
         }
 
+        List<Integer> datasetIds = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        for (String datasetName : datasetNames) {
+            Cursor cursor = db.query(
+                    TABLE_DATASETS,
+                    new String[]{COL_ID},
+                    COL_NAME + "=? AND " + COL_PROJECT_ID + "=?",
+                    new String[]{datasetName, String.valueOf(projectId)},
+                    null,
+                    null,
+                    null
+            );
+            if (cursor.moveToFirst()) {
+                datasetIds.add(cursor.getInt(cursor.getColumnIndexOrThrow(COL_ID)));
+            }
+            cursor.close();
+        }
+
+        releaseDatasetsByIds(datasetIds, projectId);
+    }
+
+    public void releaseDatasetsByIds(List<Integer> datasetIds, int projectId) {
+        if (datasetIds == null || datasetIds.isEmpty()) {
+            return;
+        }
+
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_PROJECT_ID, 0);
 
-        for (String datasetName : datasetNames) {
+        for (Integer datasetId : datasetIds) {
+            if (datasetId == null) {
+                continue;
+            }
             db.update(
                     TABLE_DATASETS,
                     values,
-                    COL_NAME + "=? AND " + COL_PROJECT_ID + "=?",
-                    new String[]{datasetName, String.valueOf(projectId)}
+                    COL_ID + "=? AND " + COL_PROJECT_ID + "=?",
+                    new String[]{String.valueOf(datasetId), String.valueOf(projectId)}
             );
         }
     }

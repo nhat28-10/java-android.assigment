@@ -31,8 +31,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class CreateProjectActivity extends AppCompatActivity {
 
@@ -53,9 +55,21 @@ public class CreateProjectActivity extends AppCompatActivity {
     private final List<String> selectedAnnotators = new ArrayList<>();
     private final List<String> selectedReviewers = new ArrayList<>();
 
+    private final List<Integer> selectedDatasetIds = new ArrayList<>();
+    private final List<Integer> selectedAnnotatorIds = new ArrayList<>();
+    private final List<Integer> selectedReviewerIds = new ArrayList<>();
+
     private final List<String> availableDatasets = new ArrayList<>();
     private final List<String> availableAnnotators = new ArrayList<>();
     private final List<String> availableReviewers = new ArrayList<>();
+
+    private final Map<String, Integer> datasetNameToId = new HashMap<>();
+    private final Map<String, Integer> annotatorNameToId = new HashMap<>();
+    private final Map<String, Integer> reviewerNameToId = new HashMap<>();
+
+    private final Map<Integer, String> datasetIdToName = new HashMap<>();
+    private final Map<Integer, String> annotatorIdToName = new HashMap<>();
+    private final Map<Integer, String> reviewerIdToName = new HashMap<>();
 
     private final Calendar deadlineCalendar = Calendar.getInstance();
     private boolean isDeadlineSelected = false;
@@ -162,6 +176,8 @@ public class CreateProjectActivity extends AppCompatActivity {
 
     private void loadDatasetsFromDb() {
         availableDatasets.clear();
+        datasetNameToId.clear();
+        datasetIdToName.clear();
 
         List<DatasetItem> datasetItems;
         if (ManagerProjectsActivity.MODE_EDIT.equals(screenMode) && editingProject != null) {
@@ -174,6 +190,8 @@ public class CreateProjectActivity extends AppCompatActivity {
             for (DatasetItem item : datasetItems) {
                 if (item != null && !TextUtils.isEmpty(item.getName())) {
                     availableDatasets.add(item.getName());
+                    datasetNameToId.put(item.getName(), item.getId());
+                    datasetIdToName.put(item.getId(), item.getName());
                 }
             }
         }
@@ -183,12 +201,18 @@ public class CreateProjectActivity extends AppCompatActivity {
 
     private void loadAnnotatorsFromDb() {
         availableAnnotators.clear();
+        annotatorNameToId.clear();
+        annotatorIdToName.clear();
+
         List<User> users = authDbHelper.getUsersByRole("annotator");
 
         if (users != null) {
             for (User user : users) {
                 if (user != null && !TextUtils.isEmpty(user.getFullName())) {
-                    availableAnnotators.add(user.getFullName());
+                    String displayName = user.getFullName();
+                    availableAnnotators.add(displayName);
+                    annotatorNameToId.put(displayName, (int) user.getId());
+                    annotatorIdToName.put((int) user.getId(), displayName);
                 }
             }
         }
@@ -198,12 +222,18 @@ public class CreateProjectActivity extends AppCompatActivity {
 
     private void loadReviewersFromDb() {
         availableReviewers.clear();
+        reviewerNameToId.clear();
+        reviewerIdToName.clear();
+
         List<User> users = authDbHelper.getUsersByRole("reviewer");
 
         if (users != null) {
             for (User user : users) {
                 if (user != null && !TextUtils.isEmpty(user.getFullName())) {
-                    availableReviewers.add(user.getFullName());
+                    String displayName = user.getFullName();
+                    availableReviewers.add(displayName);
+                    reviewerNameToId.put(displayName, (int) user.getId());
+                    reviewerIdToName.put((int) user.getId(), displayName);
                 }
             }
         }
@@ -226,24 +256,19 @@ public class CreateProjectActivity extends AppCompatActivity {
             labelList.addAll(editingProject.getLabels());
         }
 
-        selectedDatasets.clear();
-        if (editingProject.getDatasets() != null) {
-            selectedDatasets.addAll(editingProject.getDatasets());
-            for (String datasetName : editingProject.getDatasets()) {
-                if (!availableDatasets.contains(datasetName)) {
-                    availableDatasets.add(datasetName);
-                }
-            }
+        selectedDatasetIds.clear();
+        if (editingProject.getDatasetIds() != null && !editingProject.getDatasetIds().isEmpty()) {
+            selectedDatasetIds.addAll(editingProject.getDatasetIds());
         }
 
-        selectedAnnotators.clear();
-        if (editingProject.getAnnotators() != null) {
-            selectedAnnotators.addAll(editingProject.getAnnotators());
+        selectedAnnotatorIds.clear();
+        if (editingProject.getAnnotatorIds() != null && !editingProject.getAnnotatorIds().isEmpty()) {
+            selectedAnnotatorIds.addAll(editingProject.getAnnotatorIds());
         }
 
-        selectedReviewers.clear();
-        if (editingProject.getReviewers() != null) {
-            selectedReviewers.addAll(editingProject.getReviewers());
+        selectedReviewerIds.clear();
+        if (editingProject.getReviewerIds() != null && !editingProject.getReviewerIds().isEmpty()) {
+            selectedReviewerIds.addAll(editingProject.getReviewerIds());
         }
 
         if (!TextUtils.isEmpty(editingProject.getDeadline())
@@ -271,6 +296,8 @@ public class CreateProjectActivity extends AppCompatActivity {
                 spinnerExportFormat.setSelection(0);
             }
         }
+
+        syncSelectedDisplayLists();
 
         Collections.sort(availableDatasets, String.CASE_INSENSITIVE_ORDER);
         renderLabels();
@@ -376,14 +403,23 @@ public class CreateProjectActivity extends AppCompatActivity {
         }
 
         for (String dataset : availableDatasets) {
+            Integer datasetId = datasetNameToId.get(dataset);
+            if (datasetId == null) {
+                continue;
+            }
+
             CheckBox checkBox = buildCheckBox(dataset);
-            checkBox.setChecked(selectedDatasets.contains(dataset));
+            checkBox.setChecked(selectedDatasetIds.contains(datasetId));
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
+                    if (!selectedDatasetIds.contains(datasetId)) {
+                        selectedDatasetIds.add(datasetId);
+                    }
                     if (!selectedDatasets.contains(dataset)) {
                         selectedDatasets.add(dataset);
                     }
                 } else {
+                    selectedDatasetIds.remove(datasetId);
                     selectedDatasets.remove(dataset);
                 }
                 updateCounters();
@@ -404,14 +440,23 @@ public class CreateProjectActivity extends AppCompatActivity {
         }
 
         for (String annotator : availableAnnotators) {
+            Integer annotatorId = annotatorNameToId.get(annotator);
+            if (annotatorId == null) {
+                continue;
+            }
+
             CheckBox checkBox = buildCheckBox(annotator);
-            checkBox.setChecked(selectedAnnotators.contains(annotator));
+            checkBox.setChecked(selectedAnnotatorIds.contains(annotatorId));
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
+                    if (!selectedAnnotatorIds.contains(annotatorId)) {
+                        selectedAnnotatorIds.add(annotatorId);
+                    }
                     if (!selectedAnnotators.contains(annotator)) {
                         selectedAnnotators.add(annotator);
                     }
                 } else {
+                    selectedAnnotatorIds.remove(annotatorId);
                     selectedAnnotators.remove(annotator);
                 }
                 updateCounters();
@@ -432,19 +477,84 @@ public class CreateProjectActivity extends AppCompatActivity {
         }
 
         for (String reviewer : availableReviewers) {
+            Integer reviewerId = reviewerNameToId.get(reviewer);
+            if (reviewerId == null) {
+                continue;
+            }
+
             CheckBox checkBox = buildCheckBox(reviewer);
-            checkBox.setChecked(selectedReviewers.contains(reviewer));
+            checkBox.setChecked(selectedReviewerIds.contains(reviewerId));
             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
                 if (isChecked) {
+                    if (!selectedReviewerIds.contains(reviewerId)) {
+                        selectedReviewerIds.add(reviewerId);
+                    }
                     if (!selectedReviewers.contains(reviewer)) {
                         selectedReviewers.add(reviewer);
                     }
                 } else {
+                    selectedReviewerIds.remove(reviewerId);
                     selectedReviewers.remove(reviewer);
                 }
                 updateCounters();
             });
             layoutReviewerContainer.addView(wrapInCard(checkBox));
+        }
+    }
+
+    private void syncSelectedDisplayLists() {
+        selectedDatasets.clear();
+        if (!selectedDatasetIds.isEmpty()) {
+            for (Integer id : selectedDatasetIds) {
+                String name = datasetIdToName.get(id);
+                if (!TextUtils.isEmpty(name)) {
+                    selectedDatasets.add(name);
+                }
+            }
+        } else if (editingProject != null && editingProject.getDatasets() != null) {
+            selectedDatasets.addAll(editingProject.getDatasets());
+            for (String datasetName : editingProject.getDatasets()) {
+                Integer datasetId = datasetNameToId.get(datasetName);
+                if (datasetId != null && !selectedDatasetIds.contains(datasetId)) {
+                    selectedDatasetIds.add(datasetId);
+                }
+            }
+        }
+
+        selectedAnnotators.clear();
+        if (!selectedAnnotatorIds.isEmpty()) {
+            for (Integer id : selectedAnnotatorIds) {
+                String name = annotatorIdToName.get(id);
+                if (!TextUtils.isEmpty(name)) {
+                    selectedAnnotators.add(name);
+                }
+            }
+        } else if (editingProject != null && editingProject.getAnnotators() != null) {
+            selectedAnnotators.addAll(editingProject.getAnnotators());
+            for (String annotatorName : editingProject.getAnnotators()) {
+                Integer annotatorId = annotatorNameToId.get(annotatorName);
+                if (annotatorId != null && !selectedAnnotatorIds.contains(annotatorId)) {
+                    selectedAnnotatorIds.add(annotatorId);
+                }
+            }
+        }
+
+        selectedReviewers.clear();
+        if (!selectedReviewerIds.isEmpty()) {
+            for (Integer id : selectedReviewerIds) {
+                String name = reviewerIdToName.get(id);
+                if (!TextUtils.isEmpty(name)) {
+                    selectedReviewers.add(name);
+                }
+            }
+        } else if (editingProject != null && editingProject.getReviewers() != null) {
+            selectedReviewers.addAll(editingProject.getReviewers());
+            for (String reviewerName : editingProject.getReviewers()) {
+                Integer reviewerId = reviewerNameToId.get(reviewerName);
+                if (reviewerId != null && !selectedReviewerIds.contains(reviewerId)) {
+                    selectedReviewerIds.add(reviewerId);
+                }
+            }
         }
     }
 
@@ -518,22 +628,22 @@ public class CreateProjectActivity extends AppCompatActivity {
         if (ManagerProjectsActivity.MODE_EDIT.equals(screenMode) && editingProject != null) {
             project.setId(editingProject.getId());
 
-            datasetDbHelper.releaseDatasetsByNames(editingProject.getDatasets(), editingProject.getId());
+            datasetDbHelper.releaseDatasetsByIds(editingProject.getDatasetIds(), editingProject.getId());
 
             int updatedRows = projectDbHelper.updateProject(project);
             if (updatedRows > 0) {
-                datasetDbHelper.assignDatasetsToProject(project.getDatasets(), project.getId());
+                datasetDbHelper.assignDatasetsToProjectByIds(project.getDatasetIds(), project.getId());
                 showToast("Cập nhật project thành công");
                 returnProjectResult(project, ManagerProjectsActivity.MODE_EDIT);
             } else {
-                datasetDbHelper.assignDatasetsToProject(editingProject.getDatasets(), editingProject.getId());
+                datasetDbHelper.assignDatasetsToProjectByIds(editingProject.getDatasetIds(), editingProject.getId());
                 showToast("Cập nhật project thất bại");
             }
         } else {
             long insertedId = projectDbHelper.insertProject(project);
             if (insertedId > 0) {
                 project.setId((int) insertedId);
-                datasetDbHelper.assignDatasetsToProject(project.getDatasets(), project.getId());
+                datasetDbHelper.assignDatasetsToProjectByIds(project.getDatasetIds(), project.getId());
                 showToast("Tạo project thành công");
                 returnProjectResult(project, ManagerProjectsActivity.MODE_CREATE);
             } else {
@@ -568,27 +678,27 @@ public class CreateProjectActivity extends AppCompatActivity {
             return null;
         }
 
-        if (selectedDatasets.isEmpty()) {
+        if (selectedDatasetIds.isEmpty()) {
             showToast("Vui lòng chọn ít nhất 1 dataset");
             return null;
         }
 
-        if (selectedAnnotators.isEmpty()) {
+        if (selectedAnnotatorIds.isEmpty()) {
             showToast("Vui lòng chọn ít nhất 1 annotator");
             return null;
         }
 
-        if (selectedAnnotators.size() % 2 == 0) {
+        if (selectedAnnotatorIds.size() % 2 == 0) {
             showToast("Số annotator phải là số lẻ");
             return null;
         }
 
-        if (selectedReviewers.isEmpty()) {
+        if (selectedReviewerIds.isEmpty()) {
             showToast("Vui lòng chọn ít nhất 1 reviewer");
             return null;
         }
 
-        if (selectedReviewers.size() % 2 == 0) {
+        if (selectedReviewerIds.size() % 2 == 0) {
             showToast("Số reviewer phải là số lẻ");
             return null;
         }
@@ -616,8 +726,8 @@ public class CreateProjectActivity extends AppCompatActivity {
         project.setGuidelines(guidelines);
         project.setStatus(status);
         project.setReviewStatus("pending");
-        project.setReviewerCount(selectedReviewers.size());
-        project.setAnnotatorCount(selectedAnnotators.size());
+        project.setReviewerCount(selectedReviewerIds.size());
+        project.setAnnotatorCount(selectedAnnotatorIds.size());
         project.setLastUpdated(getTodayText());
 
         project.setReviewMode(reviewMode);
@@ -629,6 +739,9 @@ public class CreateProjectActivity extends AppCompatActivity {
         project.setDatasets(new ArrayList<>(selectedDatasets));
         project.setAnnotators(new ArrayList<>(selectedAnnotators));
         project.setReviewers(new ArrayList<>(selectedReviewers));
+        project.setDatasetIds(new ArrayList<>(selectedDatasetIds));
+        project.setAnnotatorIds(new ArrayList<>(selectedAnnotatorIds));
+        project.setReviewerIds(new ArrayList<>(selectedReviewerIds));
 
         return project;
     }

@@ -15,7 +15,7 @@ import java.util.List;
 public class ProjectDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     public static final String TABLE_PROJECTS = "projects";
 
@@ -36,6 +36,9 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
     public static final String COL_DATASETS = "datasets";
     public static final String COL_ANNOTATORS = "annotators";
     public static final String COL_REVIEWERS = "reviewers";
+    public static final String COL_DATASET_IDS = "dataset_ids";
+    public static final String COL_ANNOTATOR_IDS = "annotator_ids";
+    public static final String COL_REVIEWER_IDS = "reviewer_ids";
 
     public ProjectDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -43,7 +46,24 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createProjectsTable = "CREATE TABLE " + TABLE_PROJECTS + " ("
+        createProjectsTableIfNeeded(db);
+    }
+
+    @Override
+    public void onOpen(SQLiteDatabase db) {
+        super.onOpen(db);
+        createProjectsTableIfNeeded(db);
+        ensureProjectColumns(db);
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        createProjectsTableIfNeeded(db);
+        ensureProjectColumns(db);
+    }
+
+    private void createProjectsTableIfNeeded(SQLiteDatabase db) {
+        String createProjectsTable = "CREATE TABLE IF NOT EXISTS " + TABLE_PROJECTS + " ("
                 + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
                 + COL_NAME + " TEXT NOT NULL, "
                 + COL_DESCRIPTION + " TEXT, "
@@ -60,15 +80,37 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
                 + COL_LABELS + " TEXT, "
                 + COL_DATASETS + " TEXT, "
                 + COL_ANNOTATORS + " TEXT, "
-                + COL_REVIEWERS + " TEXT"
+                + COL_REVIEWERS + " TEXT, "
+                + COL_DATASET_IDS + " TEXT, "
+                + COL_ANNOTATOR_IDS + " TEXT, "
+                + COL_REVIEWER_IDS + " TEXT"
                 + ")";
         db.execSQL(createProjectsTable);
     }
 
-    @Override
-    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_PROJECTS);
-        onCreate(db);
+    private void ensureProjectColumns(SQLiteDatabase db) {
+        ensureColumn(db, COL_DATASET_IDS, "TEXT");
+        ensureColumn(db, COL_ANNOTATOR_IDS, "TEXT");
+        ensureColumn(db, COL_REVIEWER_IDS, "TEXT");
+    }
+
+    private void ensureColumn(SQLiteDatabase db, String columnName, String columnType) {
+        boolean hasColumn = false;
+        Cursor cursor = db.rawQuery("PRAGMA table_info(" + TABLE_PROJECTS + ")", null);
+        if (cursor.moveToFirst()) {
+            do {
+                String existingColumn = cursor.getString(cursor.getColumnIndexOrThrow("name"));
+                if (columnName.equalsIgnoreCase(existingColumn)) {
+                    hasColumn = true;
+                    break;
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        if (!hasColumn) {
+            db.execSQL("ALTER TABLE " + TABLE_PROJECTS + " ADD COLUMN " + columnName + " " + columnType);
+        }
     }
 
     public long insertProject(ProjectItem project) {
@@ -162,6 +204,9 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
         values.put(COL_DATASETS, joinList(project.getDatasets()));
         values.put(COL_ANNOTATORS, joinList(project.getAnnotators()));
         values.put(COL_REVIEWERS, joinList(project.getReviewers()));
+        values.put(COL_DATASET_IDS, joinIntList(project.getDatasetIds()));
+        values.put(COL_ANNOTATOR_IDS, joinIntList(project.getAnnotatorIds()));
+        values.put(COL_REVIEWER_IDS, joinIntList(project.getReviewerIds()));
         return values;
     }
 
@@ -186,6 +231,21 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
         project.setAnnotators(splitToList(cursor.getString(cursor.getColumnIndexOrThrow(COL_ANNOTATORS))));
         project.setReviewers(splitToList(cursor.getString(cursor.getColumnIndexOrThrow(COL_REVIEWERS))));
 
+        int datasetIdsIndex = cursor.getColumnIndex(COL_DATASET_IDS);
+        if (datasetIdsIndex >= 0) {
+            project.setDatasetIds(splitToIntList(cursor.getString(datasetIdsIndex)));
+        }
+
+        int annotatorIdsIndex = cursor.getColumnIndex(COL_ANNOTATOR_IDS);
+        if (annotatorIdsIndex >= 0) {
+            project.setAnnotatorIds(splitToIntList(cursor.getString(annotatorIdsIndex)));
+        }
+
+        int reviewerIdsIndex = cursor.getColumnIndex(COL_REVIEWER_IDS);
+        if (reviewerIdsIndex >= 0) {
+            project.setReviewerIds(splitToIntList(cursor.getString(reviewerIdsIndex)));
+        }
+
         return project;
     }
 
@@ -203,10 +263,41 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
         return builder.toString();
     }
 
+    private String joinIntList(List<Integer> items) {
+        if (items == null || items.isEmpty()) {
+            return "";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < items.size(); i++) {
+            builder.append(items.get(i));
+            if (i < items.size() - 1) {
+                builder.append("||");
+            }
+        }
+        return builder.toString();
+    }
+
     private List<String> splitToList(String value) {
         if (value == null || value.trim().isEmpty()) {
             return new ArrayList<>();
         }
         return new ArrayList<>(Arrays.asList(value.split("\\|\\|")));
+    }
+
+    private List<Integer> splitToIntList(String value) {
+        List<Integer> result = new ArrayList<>();
+        if (value == null || value.trim().isEmpty()) {
+            return result;
+        }
+
+        String[] parts = value.split("\\|\\|");
+        for (String part : parts) {
+            try {
+                result.add(Integer.parseInt(part));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return result;
     }
 }
