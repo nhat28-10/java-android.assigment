@@ -5,16 +5,25 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 
 import com.example.groupassignment.auth.data.AuthDbHelper;
 import com.example.groupassignment.auth.model.User;
+import com.example.groupassignment.manager.data.DatasetDbHelper;
+import com.example.groupassignment.manager.model.DatasetItem;
+import com.example.groupassignment.manager.model.ProjectItem;
 import com.example.groupassignment.reviewer.model.TaskItem;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class TaskDbHelper extends SQLiteOpenHelper {
 
@@ -133,6 +142,121 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         return updateReviewDecision(taskId, "rejected", reviewComments, rejectionReason);
     }
 
+    public void syncTasksForProject(ProjectItem project) {
+        if (project == null || project.getId() <= 0) {
+            return;
+        }
+
+        SQLiteDatabase db = getWritableDatabase();
+        AuthDbHelper authDbHelper = new AuthDbHelper(context);
+        DatasetDbHelper datasetDbHelper = new DatasetDbHelper(context);
+
+        Map<Integer, DatasetItem> datasetById = new HashMap<>();
+        for (DatasetItem item : datasetDbHelper.getAllDatasets()) {
+            datasetById.put(item.getId(), item);
+        }
+
+        Map<Integer, User> reviewerById = new HashMap<>();
+        for (User reviewer : authDbHelper.getUsersByRole("reviewer")) {
+            reviewerById.put((int) reviewer.getId(), reviewer);
+        }
+
+        Map<Integer, User> annotatorById = new HashMap<>();
+        for (User annotator : authDbHelper.getUsersByRole("annotator")) {
+            annotatorById.put((int) annotator.getId(), annotator);
+        }
+
+        List<Integer> datasetIds = safeIntList(project.getDatasetIds());
+        List<Integer> reviewerIds = safeIntList(project.getReviewerIds());
+        List<Integer> annotatorIds = safeIntList(project.getAnnotatorIds());
+
+        Set<String> desiredKeys = new HashSet<>();
+
+        for (int datasetId : datasetIds) {
+            DatasetItem dataset = datasetById.get(datasetId);
+            if (dataset == null) {
+                continue;
+            }
+
+            for (int reviewerId : reviewerIds) {
+                User reviewer = reviewerById.get(reviewerId);
+                if (reviewer == null) {
+                    continue;
+                }
+
+                int annotatorId = pickAnnotatorId(datasetId, reviewerId, annotatorIds);
+                User annotator = annotatorById.get(annotatorId);
+
+                String datasetType = normalizeType(dataset.getType());
+                String key = buildUniqueKey(project.getId(), datasetId, reviewerId);
+                desiredKeys.add(key);
+
+                TaskItem existingTask = getTaskByProjectDatasetReviewer(project.getId(), datasetId, reviewerId);
+                if (existingTask == null) {
+                    insertTask(
+                            db,
+                            project.getId(),
+                            safeText(project.getName()),
+                            datasetId,
+                            safeText(dataset.getName()),
+                            annotator == null ? 0 : (int) annotator.getId(),
+                            annotator == null ? "Unassigned" : safeText(annotator.getFullName()),
+                            reviewerId,
+                            safeText(reviewer.getFullName()),
+                            datasetType,
+                            "submitted",
+                            buildDefaultAnnotationResult(project, dataset),
+                            getNowText(),
+                            "",
+                            "",
+                            ""
+                    );
+                } else {
+                    ContentValues values = new ContentValues();
+                    values.put(COL_PROJECT_NAME, safeText(project.getName()));
+                    values.put(COL_DATASET_NAME, safeText(dataset.getName()));
+                    values.put(COL_REVIEWER_NAME, safeText(reviewer.getFullName()));
+                    values.put(COL_TYPE, datasetType);
+                    values.put(COL_ANNOTATOR_ID, annotator == null ? 0 : (int) annotator.getId());
+                    values.put(COL_ANNOTATOR_NAME, annotator == null ? "Unassigned" : safeText(annotator.getFullName()));
+
+                    db.update(
+                            TABLE_TASKS,
+                            values,
+                            COL_ID + "=?",
+                            new String[]{String.valueOf(existingTask.getId())}
+                    );
+                }
+            }
+        }
+
+        removeDeprecatedProjectTasks(db, project.getId(), desiredKeys);
+    }
+
+    public void deleteTasksByProjectId(int projectId) {
+        if (projectId <= 0) {
+            return;
+        }
+        SQLiteDatabase db = getWritableDatabase();
+        db.delete(TABLE_TASKS, COL_PROJECT_ID + "=?", new String[]{String.valueOf(projectId)});
+    }
+
+    public void ensureReviewerTasksSeeded(int reviewerId) {
+        if (reviewerId <= 0) {
+            return;
+        }
+
+        if (hasAnyTaskForReviewer(reviewerId)) {
+            return;
+        }
+
+        if (hasAnyRealProjectTask()) {
+            return;
+        }
+
+        seedDemoTasksIfEmpty();
+    }
+
     private boolean updateReviewDecision(int taskId, String status, String reviewComments, String rejectionReason) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -172,6 +296,73 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         }
 
         return tasks;
+    }
+
+    private TaskItem getTaskByProjectDatasetReviewer(int projectId, int datasetId, int reviewerId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                TABLE_TASKS,
+                null,
+                COL_PROJECT_ID + "=? AND " + COL_DATASET_ID + "=? AND " + COL_REVIEWER_ID + "=?",
+                new String[]{String.valueOf(projectId), String.valueOf(datasetId), String.valueOf(reviewerId)},
+                null,
+                null,
+                null,
+                "1"
+        );
+
+        TaskItem item = null;
+        if (cursor.moveToFirst()) {
+            item = cursorToTask(cursor);
+        }
+        cursor.close();
+        return item;
+    }
+
+    private void removeDeprecatedProjectTasks(SQLiteDatabase db, int projectId, Set<String> desiredKeys) {
+        List<TaskItem> existing = queryTasks(COL_PROJECT_ID + "=?", new String[]{String.valueOf(projectId)});
+        for (TaskItem task : existing) {
+            String key = buildUniqueKey(task.getProjectId(), task.getDatasetId(), task.getReviewerId());
+            if (!desiredKeys.contains(key)) {
+                db.delete(TABLE_TASKS, COL_ID + "=?", new String[]{String.valueOf(task.getId())});
+            }
+        }
+    }
+
+    private int pickAnnotatorId(int datasetId, int reviewerId, List<Integer> annotatorIds) {
+        if (annotatorIds.isEmpty()) {
+            return 0;
+        }
+
+        int index = Math.abs(datasetId + reviewerId) % annotatorIds.size();
+        return annotatorIds.get(index);
+    }
+
+    private List<Integer> safeIntList(List<Integer> value) {
+        if (value == null) {
+            return Collections.emptyList();
+        }
+        return value;
+    }
+
+    private String buildDefaultAnnotationResult(ProjectItem project, DatasetItem dataset) {
+        return "Preview from project '" + safeText(project.getName()) + "' dataset '" + safeText(dataset.getName()) + "'";
+    }
+
+    private String normalizeType(String datasetType) {
+        if (TextUtils.isEmpty(datasetType)) {
+            return "image";
+        }
+
+        String lower = datasetType.trim().toLowerCase(Locale.ROOT);
+        if ("audio".equals(lower) || "text".equals(lower)) {
+            return lower;
+        }
+        return "image";
+    }
+
+    private String buildUniqueKey(int projectId, int datasetId, int reviewerId) {
+        return projectId + "_" + datasetId + "_" + reviewerId;
     }
 
     private TaskItem cursorToTask(Cursor cursor) {
@@ -297,6 +488,42 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         if (cursor.moveToFirst()) {
             hasData = cursor.getInt(0) > 0;
         }
+        cursor.close();
+        return hasData;
+    }
+
+    private boolean hasAnyTaskForReviewer(int reviewerId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                TABLE_TASKS,
+                new String[]{COL_ID},
+                COL_REVIEWER_ID + "=?",
+                new String[]{String.valueOf(reviewerId)},
+                null,
+                null,
+                null,
+                "1"
+        );
+
+        boolean hasData = cursor.moveToFirst();
+        cursor.close();
+        return hasData;
+    }
+
+    private boolean hasAnyRealProjectTask() {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                TABLE_TASKS,
+                new String[]{COL_ID},
+                COL_PROJECT_ID + " > 0",
+                null,
+                null,
+                null,
+                null,
+                "1"
+        );
+
+        boolean hasData = cursor.moveToFirst();
         cursor.close();
         return hasData;
     }
