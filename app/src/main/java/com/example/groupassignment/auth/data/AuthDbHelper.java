@@ -2,6 +2,7 @@ package com.example.groupassignment.auth.data;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -14,7 +15,7 @@ import java.util.List;
 public class AuthDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
 
     public static final String TABLE_USERS = "users";
 
@@ -32,17 +33,41 @@ public class AuthDbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         createUsersTableIfNeeded(db);
+        seedDefaultUsers(db);
+    }
+
+    private void seedDefaultUsers(SQLiteDatabase db) {
+        // Simply insert default users - INSERT OR IGNORE will handle duplicates
+        String[][] defaultUsers = {
+            {"Admin User", "admin", "admin@example.com", "admin123", "admin"},
+            {"Admin Gmail", "admin2", "admin@gmail.com", "admin123", "admin"},
+            {"Manager User", "manager", "manager@example.com", "manager123", "manager"},
+            {"Annotator User", "annotator", "annotator@example.com", "annotator123", "annotator"},
+            {"Reviewer User", "reviewer", "reviewer@example.com", "reviewer123", "reviewer"}
+        };
+
+        for (String[] user : defaultUsers) {
+            ContentValues values = new ContentValues();
+            values.put(COL_FULL_NAME, user[0]);
+            values.put(COL_USERNAME, user[1]);
+            values.put(COL_EMAIL, user[2]);
+            values.put(COL_PASSWORD, user[3]);
+            values.put(COL_ROLE, user[4]);
+            db.insertWithOnConflict(TABLE_USERS, null, values, SQLiteDatabase.CONFLICT_IGNORE);
+        }
     }
 
     @Override
     public void onOpen(SQLiteDatabase db) {
         super.onOpen(db);
         createUsersTableIfNeeded(db);
+        seedDefaultUsers(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         createUsersTableIfNeeded(db);
+        seedDefaultUsers(db);
     }
 
     private void createUsersTableIfNeeded(SQLiteDatabase db) {
@@ -193,6 +218,37 @@ public class AuthDbHelper extends SQLiteOpenHelper {
                 null,
                 null,
                 COL_FULL_NAME + " COLLATE NOCASE ASC"
+        );
+
+        if (cursor.moveToFirst()) {
+            do {
+                long id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID));
+                String fullName = cursor.getString(cursor.getColumnIndexOrThrow(COL_FULL_NAME));
+                String username = cursor.getString(cursor.getColumnIndexOrThrow(COL_USERNAME));
+                String email = cursor.getString(cursor.getColumnIndexOrThrow(COL_EMAIL));
+                String password = cursor.getString(cursor.getColumnIndexOrThrow(COL_PASSWORD));
+                String userRole = cursor.getString(cursor.getColumnIndexOrThrow(COL_ROLE));
+                users.add(new User(id, fullName, username, email, password, userRole));
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+        db.close();
+        return users;
+    }
+
+    public List<User> getAllUsers() {
+        List<User> users = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(
+                TABLE_USERS,
+                null,
+                null,
+                null,
+                null,
+                null,
+                COL_ID + " DESC"
         );
 
         if (cursor.moveToFirst()) {

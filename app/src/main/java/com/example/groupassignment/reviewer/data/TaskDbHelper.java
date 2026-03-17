@@ -535,4 +535,75 @@ public class TaskDbHelper extends SQLiteOpenHelper {
     private String safeText(String value) {
         return value == null ? "" : value;
     }
+
+    // ==================== ANNOTATOR METHODS ====================
+
+    public List<TaskItem> getTasksForAnnotator(int annotatorId) {
+        return queryTasks(COL_ANNOTATOR_ID + "=?", new String[]{String.valueOf(annotatorId)});
+    }
+
+    public List<TaskItem> getPendingTasksForAnnotator(int annotatorId) {
+        return queryTasks(
+                COL_ANNOTATOR_ID + "=? AND (" + COL_STATUS + "=? OR " + COL_STATUS + "=? OR " + COL_STATUS + "=?)",
+                new String[]{String.valueOf(annotatorId), "new", "assigned", "in_progress"}
+        );
+    }
+
+    public boolean updateAnnotation(int taskId, String annotation, String status) {
+        SQLiteDatabase db = getWritableDatabase();
+        ContentValues values = new ContentValues();
+        values.put(COL_ANNOTATION_RESULT, annotation);
+        values.put(COL_STATUS, status);
+        values.put(COL_SUBMITTED_AT, getNowText());
+
+        int updatedRows = db.update(TABLE_TASKS, values, COL_ID + "=?",
+                new String[]{String.valueOf(taskId)});
+        return updatedRows > 0;
+    }
+
+    public void seedDemoTasksForAnnotator(int annotatorId) {
+        if (annotatorId <= 0) return;
+        if (hasAnyTaskForAnnotator(annotatorId)) return;
+        if (hasAnyRealProjectTask()) return;
+
+        AuthDbHelper authDbHelper = new AuthDbHelper(context);
+        List<User> reviewers = authDbHelper.getUsersByRole("reviewer");
+
+        if (reviewers.isEmpty()) {
+            reviewers.add(new User(1, "Reviewer Demo", "reviewer_demo", "reviewer@example.com", "", "reviewer"));
+        }
+
+        SQLiteDatabase db = getWritableDatabase();
+
+        // Seed demo tasks for annotator
+        insertTask(db, 1, "Image Classification Project", 1, "Cat Images Dataset",
+                annotatorId, "Annotator", 1, "Reviewer Demo",
+                "image", "new", "", "", "", "", "");
+
+        insertTask(db, 2, "Text Labeling Project", 2, "News Articles Dataset",
+                annotatorId, "Annotator", 1, "Reviewer Demo",
+                "text", "in_progress", "Sample annotation text...", "", "", "", "");
+
+        insertTask(db, 3, "Audio Transcription Project", 3, "Meeting Recordings",
+                annotatorId, "Annotator", 1, "Reviewer Demo",
+                "audio", "submitted", "Transcribed audio content here", getNowText(), "", "", "");
+    }
+
+    private boolean hasAnyTaskForAnnotator(int annotatorId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(
+                TABLE_TASKS,
+                new String[]{COL_ID},
+                COL_ANNOTATOR_ID + "=?",
+                new String[]{String.valueOf(annotatorId)},
+                null,
+                null,
+                null,
+                "1"
+        );
+
+        boolean hasData = cursor.moveToFirst();
+        cursor.close();
+        return hasData;
+    }
 }

@@ -63,4 +63,24 @@ public class SessionManager {
         editor.clear();
         editor.apply();
     }
+
+    public boolean isAdmin() {
+        return "ADMIN".equalsIgnoreCase(getRole());
+    }
+
+    public boolean isManager() {
+        return "MANAGER".equalsIgnoreCase(getRole());
+    }
+
+    public boolean isAnnotator() {
+        return "ANNOTATOR".equalsIgnoreCase(getRole());
+    }
+
+    public boolean isReviewer() {
+        return "REVIEWER".equalsIgnoreCase(getRole());
+    }
+
+    public String getCurrentUserName() {
+        return getName();
+    }
 }

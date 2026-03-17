@@ -14,6 +14,7 @@ import com.example.groupassignment.MainActivity;
 import com.example.groupassignment.R;
 import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.ManagerDashboardActivity;
+import com.example.groupassignment.annotator.AnnotatorDashboardActivity;
 import com.example.groupassignment.annotator.AnnotatorOverviewActivity;
 import com.example.groupassignment.reviewer.ReviewerDashboardActivity;
 import com.example.groupassignment.auth.data.AuthDbHelper;
@@ -95,10 +96,12 @@ public class LoginActivity extends AppCompatActivity {
     private void navigateByRole(String roleValue) {
         if ("manager".equalsIgnoreCase(roleValue) || "admin".equalsIgnoreCase(roleValue)) {
             startActivity(new Intent(LoginActivity.this, ManagerDashboardActivity.class));
-        } else if ("annotator".equalsIgnoreCase(roleValue)) {
-            startActivity(new Intent(LoginActivity.this, AnnotatorOverviewActivity.class));
-        } else if ("reviewer".equalsIgnoreCase(roleValue)) {
+        } else if ("annotator".equalsIgnoreCase(roleValue) || "ANNOTATOR".equalsIgnoreCase(roleValue)) {
+            startActivity(new Intent(LoginActivity.this, AnnotatorDashboardActivity.class));
+        } else if ("reviewer".equalsIgnoreCase(roleValue) || "REVIEWER".equalsIgnoreCase(roleValue)) {
             startActivity(new Intent(LoginActivity.this, ReviewerDashboardActivity.class));
+        } else {
+            Toast.makeText(this, "Unauthorized role: " + roleValue, Toast.LENGTH_SHORT).show();
         }
     }
 }

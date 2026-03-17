@@ -1,12 +1,12 @@
-package com.example.groupassigment.repository;
+package com.example.groupassignment.repository;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import com.example.groupassigment.database.DatabaseHelper;
-import com.example.groupassigment.models.User;
-import com.example.groupassigment.models.UserRole;
+import com.example.groupassignment.database.DatabaseHelper;
+import com.example.groupassignment.models.User;
+import com.example.groupassignment.models.UserRole;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.example.groupassigment.database;
+package com.example.groupassignment.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

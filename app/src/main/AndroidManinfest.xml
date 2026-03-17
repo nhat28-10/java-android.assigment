@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.GroupAssignment">
+
+        <activity android:name=".auth.RegisterActivity" />
+        <activity android:name=".manager.ManagerDashboardActivity" />
+        <activity android:name=".manager.ProjectsActivity" />
+        <activity android:name=".manager.DatasetsActivity" />
+        <activity android:name=".reviewer.ReviewerDashboardActivity" />
+        <activity android:name=".reviewer.ReviewerTaskActivity" />
+        <activity android:name=".annotator.AnnotatorOverviewActivity" />
+        <activity android:name=".annotator.AnnotatorDashboardActivity" />
+        <activity android:name=".annotator.AnnotatorTaskActivity" />
+        <activity android:name=".auth.LoginActivity" />
+        <activity android:name=".manager.CreateProjectActivity"/>
+        <activity android:name=".manager.ManagerProjectsActivity" />
+        <activity android:name=".manager.ProjectDetailActivity" />
+        <activity android:name=".manager.CreateDatasetActivity" />
+        <activity android:name=".manager.DatasetDetailActivity" />
+        <activity android:name=".manager.AnnotatorAuditDetailActivity" />
+        <activity android:name=".ui.admin.AdminDashboardActivity" />
+        <activity android:name=".ui.admin.UserManagementActivity" />
+
+        <activity
+            android:name=".SplashActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+    </application>
+
+</manifest>

@@ -2,8 +2,10 @@ package com.example.groupassignment.manager;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -18,6 +20,8 @@ import java.util.Locale;
 
 public class ManagerDashboardActivity extends AppCompatActivity {
 
+    private static final String TAG = "ManagerDashboard";
+
     private TextView tvWelcomeManager;
     private TextView tvActiveProjects, tvTotalTasks, tvPendingReview, tvApprovalRate;
     private TextView tvInProgressCount, tvPendingCount, tvApprovedCount, tvRejectedCount;
@@ -30,11 +34,24 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_dashboard);
 
-        projectDbHelper = new ProjectDbHelper(this);
+        try {
+            SessionManager sessionManager = new SessionManager(this);
+            if (!sessionManager.isLoggedIn() || (!sessionManager.isManager() && !sessionManager.isAdmin())) {
+                Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+                finish();
+                return;
+            }
 
-        initViews();
-        bindDashboardData();
-        setupActions();
+            projectDbHelper = new ProjectDbHelper(this);
+
+            initViews();
+            bindDashboardData();
+            setupActions();
+        } catch (Exception e) {
+            Log.e(TAG, "Error in onCreate", e);
+            Toast.makeText(this, "Error loading dashboard", Toast.LENGTH_SHORT).show();
+            finish();
+        }
     }
 
     @Override
@@ -62,7 +79,11 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     }
 
     private void bindDashboardData() {
-        String managerName = "Manager";
+        SessionManager sessionManager = new SessionManager(this);
+        String managerName = sessionManager.getName();
+        if (managerName == null || managerName.isEmpty()) {
+            managerName = "Manager";
+        }
         tvWelcomeManager.setText("Welcome back, " + managerName);
 
         List<ProjectItem> projects = projectDbHelper.getAllProjects();

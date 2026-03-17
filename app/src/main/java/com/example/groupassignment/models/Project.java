@@ -1,4 +1,4 @@
-package com.example.groupassigment.models;
+package com.example.groupassignment.models;
 
 public class Project {
     private long id;

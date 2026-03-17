@@ -1,4 +1,4 @@
-package com.example.groupassigment.models;
+package com.example.groupassignment.models;
 
 /**
  * User roles in the system
