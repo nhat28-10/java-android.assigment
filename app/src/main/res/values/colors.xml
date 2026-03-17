@@ -1,5 +1,39 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <color name="bg_dark">#050B14</color>
+    <color name="bg_dark_top">#07131F</color>
+    <color name="bg_teal_glow">#0F3B46</color>
+
+    <color name="bg_card_glass">#9E0F172A</color>
+    <color name="bg_input">#BF0F172A</color>
+    <color name="bg_card">#1F2937</color>
+    <color name="bg_card_border">#374151</color>
+
+    <color name="border_dark">#334155</color>
+    <color name="border_dark_light">#475569</color>
+
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+    <color name="text_soft">#CBD5E1</color>
+
+    <color name="cyan_primary">#22D3EE</color>
+    <color name="cyan_light">#67E8F9</color>
+    <color name="cyan_dark_text">#082F49</color>
+    <color name="blue_primary">#2563EB</color>
+
+    <color name="status_blue_bg">#10243F</color>
+    <color name="status_blue_text">#60A5FA</color>
+
+    <color name="status_yellow_bg">#3F2A12</color>
+    <color name="status_yellow_text">#FBBF24</color>
+
+    <color name="status_green_bg">#123122</color>
+    <color name="status_green_text">#4ADE80</color>
+
+    <color name="status_red_bg">#3F1720</color>
+    <color name="status_red_text">#FB7185</color>
+
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
 </resources>

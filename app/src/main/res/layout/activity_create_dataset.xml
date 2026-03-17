@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0F172A"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingBottom="12dp">
+
+            <ImageButton
+                android:id="@+id/btnBackCreateDataset"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginEnd="12dp"
+                android:background="@android:color/transparent"
+                android:src="@android:drawable/ic_menu_revert"
+                android:tint="#E2E8F0" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Create / Edit Dataset"
+                android:textColor="#F8FAFC"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnSaveDataset"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:backgroundTint="#2563EB"
+                android:text="Save"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Dataset Name"
+            android:textColor="#CBD5E1"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etDatasetName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="14dp"
+            android:backgroundTint="#475569"
+            android:hint="Enter dataset name"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Dataset Type"
+            android:textColor="#CBD5E1"
+            android:textStyle="bold" />
+
+        <Spinner
+            android:id="@+id/spDatasetType"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="14dp"
+            android:backgroundTint="#475569" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="8dp"
+            android:text="Description"
+            android:textColor="#CBD5E1"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etDatasetDescription"
+            android:layout_width="match_parent"
+            android:layout_height="96dp"
+            android:layout_marginBottom="16dp"
+            android:backgroundTint="#475569"
+            android:gravity="top"
+            android:hint="Enter description"
+            android:inputType="textMultiLine"
+            android:padding="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="Dataset Statistics"
+            android:textColor="#F8FAFC"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/etTotalItems"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#475569"
+            android:hint="Total items"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+        <EditText
+            android:id="@+id/etApprovedItems"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#475569"
+            android:hint="Approved items"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+        <EditText
+            android:id="@+id/etSubmittedItems"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#475569"
+            android:hint="Under review items"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+        <EditText
+            android:id="@+id/etPendingItems"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="12dp"
+            android:backgroundTint="#475569"
+            android:hint="Pending annotation items"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+        <EditText
+            android:id="@+id/etRejectedItems"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="8dp"
+            android:backgroundTint="#475569"
+            android:hint="Rejected items"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:textColor="#E2E8F0"
+            android:textColorHint="#94A3B8" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

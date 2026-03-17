@@ -3,13 +3,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.groupassigment"
+    namespace = "com.example.groupassignment"
     compileSdk {
         version = release(36)
     }
 
     defaultConfig {
-        applicationId = "com.example.groupassigment"
+        applicationId = "com.example.groupassignment"
         minSdk = 34
         targetSdk = 36
         versionCode = 1
