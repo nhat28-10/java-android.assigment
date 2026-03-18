@@ -14,6 +14,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
 
@@ -37,6 +39,7 @@ public class CreateDatasetActivity extends AppCompatActivity {
     private EditText etRejectedItems;
 
     private DatasetDbHelper datasetDbHelper;
+    private SessionManager sessionManager;
     private DatasetItem currentDataset;
     private String currentMode = DatasetsActivity.MODE_CREATE;
 
@@ -44,6 +47,13 @@ public class CreateDatasetActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_dataset);
+        sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isLoggedIn() || !sessionManager.isManager()) {
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            RoleNavigation.redirectToHome(this, sessionManager.getRole());
+            return;
+        }
 
         datasetDbHelper = new DatasetDbHelper(this);
 

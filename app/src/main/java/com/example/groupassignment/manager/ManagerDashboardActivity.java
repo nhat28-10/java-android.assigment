@@ -13,6 +13,7 @@ import com.example.groupassignment.R;
 import com.example.groupassignment.auth.LoginActivity;
 import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
+import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     private Button btnProjects, btnDatasets, btnLogout;
 
     private ProjectDbHelper projectDbHelper;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +37,10 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_manager_dashboard);
 
         try {
-            SessionManager sessionManager = new SessionManager(this);
-            if (!sessionManager.isLoggedIn() || (!sessionManager.isManager() && !sessionManager.isAdmin())) {
+            sessionManager = new SessionManager(this);
+            if (!sessionManager.isLoggedIn() || !sessionManager.isManager()) {
                 Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
-                finish();
+                RoleNavigation.redirectToHome(this, sessionManager.getRole());
                 return;
             }
 
@@ -79,7 +81,6 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     }
 
     private void bindDashboardData() {
-        SessionManager sessionManager = new SessionManager(this);
         String managerName = sessionManager.getName();
         if (managerName == null || managerName.isEmpty()) {
             managerName = "Manager";
@@ -145,7 +146,6 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     }
 
     private void logout() {
-        SessionManager sessionManager = new SessionManager(this);
         sessionManager.logout();
 
         Intent intent = new Intent(this, LoginActivity.class);

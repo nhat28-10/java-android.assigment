@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.groupassignment.R;
 import com.example.groupassignment.auth.LoginActivity;
 import com.example.groupassignment.auth.data.AuthDbHelper;
+import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 
 public class AdminDashboardActivity extends AppCompatActivity {
@@ -29,7 +30,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         if (!sessionManager.isLoggedIn() || !sessionManager.isAdmin()) {
             Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
-            finish();
+            RoleNavigation.redirectToHome(this, sessionManager.getRole());
             return;
         }
 

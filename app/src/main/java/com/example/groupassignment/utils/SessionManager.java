@@ -29,7 +29,7 @@ public class SessionManager {
         editor.putBoolean(KEY_LOGGED_IN, true);
         editor.putLong(KEY_USER_ID, userId);
         editor.putString(KEY_TOKEN, token);
-        editor.putString(KEY_ROLE, role);
+        editor.putString(KEY_ROLE, RoleNavigation.normalizeRole(role));
         editor.putString(KEY_NAME, name);
         editor.putString(KEY_EMAIL, email);
         editor.apply();
@@ -44,7 +44,7 @@ public class SessionManager {
     }
 
     public String getRole() {
-        return prefs.getString(KEY_ROLE, "");
+        return RoleNavigation.normalizeRole(prefs.getString(KEY_ROLE, ""));
     }
 
     public String getName() {
@@ -64,20 +64,24 @@ public class SessionManager {
         editor.apply();
     }
 
+    public boolean hasRole(String expectedRole) {
+        return RoleNavigation.isRole(getRole(), expectedRole);
+    }
+
     public boolean isAdmin() {
-        return "ADMIN".equalsIgnoreCase(getRole());
+        return hasRole("admin");
     }
 
     public boolean isManager() {
-        return "MANAGER".equalsIgnoreCase(getRole());
+        return hasRole("manager");
     }
 
     public boolean isAnnotator() {
-        return "ANNOTATOR".equalsIgnoreCase(getRole());
+        return hasRole("annotator");
     }
 
     public boolean isReviewer() {
-        return "REVIEWER".equalsIgnoreCase(getRole());
+        return hasRole("reviewer");
     }
 
     public String getCurrentUserName() {

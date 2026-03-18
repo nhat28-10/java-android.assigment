@@ -13,11 +13,14 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,11 +51,19 @@ public class AnnotatorAuditDetailActivity extends AppCompatActivity {
     private String annotatorName = "Annotator";
 
     private final List<AuditTaskItem> allTasks = new ArrayList<>();
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_annotator_audit_detail);
+        sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isLoggedIn() || !sessionManager.isManager()) {
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            RoleNavigation.redirectToHome(this, sessionManager.getRole());
+            return;
+        }
 
         initViews();
         readIntentData();

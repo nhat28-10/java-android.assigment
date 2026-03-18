@@ -23,6 +23,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
 
@@ -48,6 +50,7 @@ public class DatasetsActivity extends AppCompatActivity {
     private TextView tvEmptyDatasets;
 
     private DatasetDbHelper datasetDbHelper;
+    private SessionManager sessionManager;
     private final List<DatasetItem> allDatasets = new ArrayList<>();
     public static final String EXTRA_DATASET_RESULT = "extra_dataset_result";
     public static final String EXTRA_DATASET_MODE = "extra_dataset_mode";
@@ -58,6 +61,13 @@ public class DatasetsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_manager_datasets);
+        sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isLoggedIn() || !sessionManager.isManager()) {
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            RoleNavigation.redirectToHome(this, sessionManager.getRole());
+            return;
+        }
 
         datasetDbHelper = new DatasetDbHelper(this);
         datasetDbHelper.seedSampleDatasetsIfEmpty();
