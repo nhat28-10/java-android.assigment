@@ -44,6 +44,12 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
         taskDbHelper = new TaskDbHelper(this);
         sessionManager = new SessionManager(this);
 
+        if (!sessionManager.isLoggedIn() || !sessionManager.isReviewer()) {
+            finish();
+            startActivity(com.example.groupassignment.utils.RoleNavigation.buildHomeIntent(this, sessionManager.getRole()));
+            return;
+        }
+
         initViews();
         setupResultLauncher();
         setupActions();
