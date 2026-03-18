@@ -8,18 +8,41 @@
     android:padding="24dp">
 
     <TextView
+        android:id="@+id/tvAnnotatorWelcome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:gravity="center"
         android:text="Annotator Overview"
         android:textColor="@color/text_primary"
         android:textSize="28sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvAnnotatorTaskSummary"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:gravity="center"
+        android:text="Assigned tasks: 0&#10;Pending work: 0"
+        android:textColor="@color/text_secondary"
+        android:textSize="16sp" />
+
+    <Button
+        android:id="@+id/btnOpenTask"
+        android:layout_width="match_parent"
+        android:layout_height="54dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_button_secondary"
+        android:text="Open My Next Task"
+        android:textAllCaps="false"
+        android:textColor="@color/text_primary"
         android:textStyle="bold" />
 
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="match_parent"
         android:layout_height="54dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="16dp"
         android:background="@drawable/bg_button_cyan"
         android:text="Logout"
         android:textAllCaps="false"

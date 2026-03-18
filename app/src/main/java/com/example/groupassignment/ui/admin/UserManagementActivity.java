@@ -1,27 +1,25 @@
 package com.example.groupassignment.ui.admin;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.groupassignment.R;
-import com.example.groupassignment.models.User;
-import com.example.groupassignment.models.UserRole;
-import com.example.groupassignment.repository.UserRepository;
+import com.example.groupassignment.auth.data.AuthDbHelper;
+import com.example.groupassignment.auth.model.User;
 import com.example.groupassignment.utils.SessionManager;
-import java.util.Arrays;
 
 public class UserManagementActivity extends AppCompatActivity {
     private EditText etUsername, etEmail, etFullName, etPassword;
     private Spinner spRole;
     private Button btnSave;
-    private UserRepository userRepository;
+    private AuthDbHelper authDbHelper;
     private SessionManager sessionManager;
-    private User editUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +27,7 @@ public class UserManagementActivity extends AppCompatActivity {
         setContentView(R.layout.activity_user_management);
 
         sessionManager = new SessionManager(this);
-        userRepository = new UserRepository(this);
+        authDbHelper = new AuthDbHelper(this);
 
         if (!sessionManager.isLoggedIn() || !sessionManager.isAdmin()) {
             Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
@@ -45,15 +43,11 @@ public class UserManagementActivity extends AppCompatActivity {
         btnSave = findViewById(R.id.btnSave);
 
         setupRoleSpinner();
-
-        btnSave.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { saveUser(); }
-        });
+        btnSave.setOnClickListener(v -> saveUser());
     }
 
     private void setupRoleSpinner() {
-        String[] roles = {"ADMIN", "MANAGER", "ANNOTATOR", "REVIEWER"};
+        String[] roles = {"admin", "manager", "annotator", "reviewer"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, roles);
         spRole.setAdapter(adapter);
     }
@@ -65,20 +59,25 @@ public class UserManagementActivity extends AppCompatActivity {
         String password = etPassword.getText().toString().trim();
         String role = spRole.getSelectedItem().toString();
 
-        if (username.isEmpty() || fullName.isEmpty() || password.isEmpty()) {
+        if (username.isEmpty() || email.isEmpty() || fullName.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setFullName(fullName);
-        user.setPassword(password);
-        user.setRole(UserRole.valueOf(role));
-        user.setActive(true);
+        if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+            etEmail.setError("Invalid email");
+            etEmail.requestFocus();
+            return;
+        }
 
-        long id = userRepository.insertUser(user);
+        if (authDbHelper.isEmailExists(email)) {
+            etEmail.setError("Email already exists");
+            etEmail.requestFocus();
+            return;
+        }
+
+        User user = new User(0, fullName, username, email, password, role);
+        long id = authDbHelper.registerUser(user);
         if (id > 0) {
             Toast.makeText(this, "User created successfully", Toast.LENGTH_SHORT).show();
             finish();

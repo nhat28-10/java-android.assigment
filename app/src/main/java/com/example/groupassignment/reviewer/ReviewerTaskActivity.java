@@ -46,6 +46,13 @@ public class ReviewerTaskActivity extends AppCompatActivity {
 
         taskDbHelper = new TaskDbHelper(this);
         sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isLoggedIn() || !sessionManager.isReviewer()) {
+            finish();
+            startActivity(com.example.groupassignment.utils.RoleNavigation.buildHomeIntent(this, sessionManager.getRole()));
+            return;
+        }
+
         currentReviewerId = (int) sessionManager.getUserId();
         taskId = getIntent().getIntExtra(EXTRA_TASK_ID, -1);
 

@@ -1,7 +1,6 @@
 package com.example.groupassignment.annotator;
 
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -43,6 +42,7 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
         tvProjectName = findViewById(R.id.tvProjectName);
         tvDatasetName = findViewById(R.id.tvDatasetName);
         tvStatus = findViewById(R.id.tvStatus);
+        tvInstructions = findViewById(R.id.tvInstructions);
         etAnnotation = findViewById(R.id.etAnnotation);
         btnSave = findViewById(R.id.btnSave);
         btnSubmit = findViewById(R.id.btnSubmit);
@@ -61,14 +61,14 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
         tvProjectName.setText("Project: " + currentTask.getProjectName());
         tvDatasetName.setText("Dataset: " + currentTask.getDatasetName());
         tvStatus.setText("Status: " + currentTask.getStatus());
-
         tvInstructions.setText("Instructions:\n1. Review the data carefully\n2. Add your annotations\n3. Click Submit when done");
 
         if (currentTask.getAnnotationResult() != null && !currentTask.getAnnotationResult().isEmpty()) {
             etAnnotation.setText(currentTask.getAnnotationResult());
         }
 
-        if ("submitted".equals(currentTask.getStatus()) || "approved".equals(currentTask.getStatus())) {
+        if ("submitted".equalsIgnoreCase(currentTask.getStatus())
+                || "approved".equalsIgnoreCase(currentTask.getStatus())) {
             btnSubmit.setEnabled(false);
             btnSave.setEnabled(false);
             etAnnotation.setEnabled(false);
@@ -89,6 +89,7 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
 
         boolean success = taskDbHelper.updateAnnotation(taskId, annotation, "in_progress");
         if (success) {
+            tvStatus.setText("Status: in_progress");
             Toast.makeText(this, "Draft saved", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "Failed to save", Toast.LENGTH_SHORT).show();
@@ -104,6 +105,7 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
 
         boolean success = taskDbHelper.updateAnnotation(taskId, annotation, "submitted");
         if (success) {
+            tvStatus.setText("Status: submitted");
             Toast.makeText(this, "Task submitted successfully", Toast.LENGTH_SHORT).show();
             btnSubmit.setEnabled(false);
             btnSave.setEnabled(false);
