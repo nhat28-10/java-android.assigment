@@ -11,12 +11,10 @@
 
         <activity android:name=".auth.RegisterActivity" />
         <activity android:name=".manager.ManagerDashboardActivity" />
-        <activity android:name=".manager.ProjectsActivity" />
         <activity android:name=".manager.DatasetsActivity" />
         <activity android:name=".reviewer.ReviewerDashboardActivity" />
         <activity android:name=".reviewer.ReviewerTaskActivity" />
         <activity android:name=".annotator.AnnotatorOverviewActivity" />
-        <activity android:name=".annotator.AnnotatorDashboardActivity" />
         <activity android:name=".annotator.AnnotatorTaskActivity" />
         <activity android:name=".auth.LoginActivity" />
         <activity android:name=".manager.CreateProjectActivity"/>

@@ -15,6 +15,8 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
@@ -56,6 +58,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
     private ProjectItem currentProject;
     private ProjectDbHelper projectDbHelper;
+    private SessionManager sessionManager;
     private DatasetDbHelper datasetDbHelper;
     private TaskDbHelper taskDbHelper;
 
@@ -94,6 +97,13 @@ public class ProjectDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_project_detail);
+        sessionManager = new SessionManager(this);
+
+        if (!sessionManager.isLoggedIn() || !sessionManager.isManager()) {
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            RoleNavigation.redirectToHome(this, sessionManager.getRole());
+            return;
+        }
 
         projectDbHelper = new ProjectDbHelper(this);
         datasetDbHelper = new DatasetDbHelper(this);

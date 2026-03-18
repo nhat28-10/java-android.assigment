@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.groupassignment.R;
 import com.example.groupassignment.reviewer.data.TaskDbHelper;
 import com.example.groupassignment.reviewer.model.TaskItem;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 
 public class AnnotatorTaskActivity extends AppCompatActivity {
 
@@ -20,12 +22,22 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
     private TaskDbHelper taskDbHelper;
     private TaskItem currentTask;
     private int taskId;
+    private SessionManager sessionManager;
+    private int currentAnnotatorId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_annotator_task);
 
+        sessionManager = new SessionManager(this);
+        if (!sessionManager.isLoggedIn() || !sessionManager.isAnnotator()) {
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            RoleNavigation.redirectToHome(this, sessionManager.getRole());
+            return;
+        }
+
+        currentAnnotatorId = (int) sessionManager.getUserId();
         taskId = getIntent().getIntExtra("task_id", -1);
         if (taskId == -1) {
             Toast.makeText(this, "Invalid task", Toast.LENGTH_SHORT).show();
@@ -54,6 +66,12 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
         currentTask = taskDbHelper.getTaskById(taskId);
         if (currentTask == null) {
             Toast.makeText(this, "Task not found", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        if (currentAnnotatorId > 0 && currentTask.getAnnotatorId() != currentAnnotatorId) {
+            Toast.makeText(this, "You do not have access to this task", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }

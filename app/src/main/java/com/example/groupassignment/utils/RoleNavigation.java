@@ -1,5 +1,6 @@
 package com.example.groupassignment.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
@@ -24,10 +25,10 @@ public final class RoleNavigation {
             intent = new Intent(context, AdminDashboardActivity.class);
         } else if (isRole(role, "manager")) {
             intent = new Intent(context, ManagerDashboardActivity.class);
-        } else if (isRole(role, "annotator")) {
-            intent = new Intent(context, AnnotatorOverviewActivity.class);
         } else if (isRole(role, "reviewer")) {
             intent = new Intent(context, ReviewerDashboardActivity.class);
+        } else if (isRole(role, "annotator")) {
+            intent = new Intent(context, AnnotatorOverviewActivity.class);
         } else {
             intent = new Intent(context, LoginActivity.class);
         }
@@ -36,7 +37,17 @@ public final class RoleNavigation {
         return intent;
     }
 
+    public static void redirectToHome(@NonNull Activity activity, String role) {
+        activity.startActivity(buildHomeIntent(activity, role));
+        activity.finish();
+    }
+
     public static boolean isRole(String role, @NonNull String expectedRole) {
-        return expectedRole.equalsIgnoreCase(role == null ? "" : role.trim());
+        return expectedRole.equalsIgnoreCase(normalizeRole(role));
+    }
+
+    @NonNull
+    public static String normalizeRole(String role) {
+        return role == null ? "" : role.trim().toLowerCase();
     }
 }
