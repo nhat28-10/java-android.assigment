@@ -17,7 +17,7 @@ import java.util.Locale;
 public class DatasetDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
 
     public static final String TABLE_DATASETS = "datasets";
 
@@ -237,7 +237,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
                     values,
                     COL_ID + "=?",
                     new String[]{String.valueOf(datasetId)}
-            );
+                    );
         }
     }
 
