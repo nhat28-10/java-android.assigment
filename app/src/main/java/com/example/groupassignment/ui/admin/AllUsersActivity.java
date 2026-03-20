@@ -2,6 +2,7 @@ package com.example.groupassignment.ui.admin;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
@@ -26,6 +27,7 @@ import java.util.List;
 public class AllUsersActivity extends AppCompatActivity {
     private ListView lvAllUsers;
     private Button btnBack;
+    private TextView tvStatTotal, tvStatManager, tvStatAnnotator, tvStatReviewer;
     private AuthDbHelper authDbHelper;
     private SessionManager sessionManager;
     private List<User> userList;
@@ -44,6 +46,10 @@ public class AllUsersActivity extends AppCompatActivity {
             return;
         }
 
+        tvStatTotal = findViewById(R.id.tvStatTotal);
+        tvStatManager = findViewById(R.id.tvStatManager);
+        tvStatAnnotator = findViewById(R.id.tvStatAnnotator);
+        tvStatReviewer = findViewById(R.id.tvStatReviewer);
         lvAllUsers = findViewById(R.id.lvAllUsers);
         btnBack = findViewById(R.id.btnBack);
 
@@ -59,31 +65,67 @@ public class AllUsersActivity extends AppCompatActivity {
 
     private void refreshUserList() {
         userList = authDbHelper.getAllUsers();
-        ArrayAdapter<User> adapter = new ArrayAdapter<User>(this, android.R.layout.simple_list_item_2, android.R.id.text1, userList) {
+        updateStatistics();
+
+        ArrayAdapter<User> adapter = new ArrayAdapter<User>(this, R.layout.item_user_card, userList) {
             @NonNull
             @Override
             public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
+                if (convertView == null) {
+                    convertView = LayoutInflater.from(getContext()).inflate(R.layout.item_user_card, parent, false);
+                }
+
                 User u = userList.get(position);
-                TextView text1 = view.findViewById(android.R.id.text1);
-                TextView text2 = view.findViewById(android.R.id.text2);
+                TextView tvName = convertView.findViewById(R.id.tvUserFullName);
+                TextView tvEmail = convertView.findViewById(R.id.tvUserEmail);
+                TextView tvRole = convertView.findViewById(R.id.tvUserRole);
+                TextView tvStatus = convertView.findViewById(R.id.tvUserStatus);
+                View indicator = convertView.findViewById(R.id.viewRoleIndicator);
 
                 boolean isEnabled = authDbHelper.isUserEnabled(u.getId());
-                String status = isEnabled ? " [Enabled]" : " [DISABLED]";
 
-                text1.setText(u.getFullName() + status);
-                text1.setTextColor(isEnabled ? Color.CYAN : Color.RED);
-                text1.setTextSize(18);
+                tvName.setText(u.getFullName());
+                tvEmail.setText(u.getEmail());
+                tvRole.setText(u.getRole());
 
-                text2.setText("Role: " + u.getRole() + " | Email: " + u.getEmail());
-                text2.setTextColor(Color.LTGRAY);
-                
-                // Set background for items to look like cards
-                view.setPadding(32, 32, 32, 32);
-                return view;
+                if (isEnabled) {
+                    tvStatus.setText("ACTIVE");
+                    tvStatus.setBackgroundResource(R.drawable.bg_button_cyan);
+                    tvStatus.setTextColor(Color.parseColor("#004D40"));
+                } else {
+                    tvStatus.setText("DISABLED");
+                    tvStatus.setBackgroundResource(R.drawable.bg_button_primary);
+                    tvStatus.setTextColor(Color.WHITE);
+                }
+
+                // Set indicator color based on role
+                switch (u.getRole().toLowerCase()) {
+                    case "admin": indicator.setBackgroundColor(Color.parseColor("#FF5252")); break;
+                    case "manager": indicator.setBackgroundColor(Color.parseColor("#448AFF")); break;
+                    case "annotator": indicator.setBackgroundColor(Color.parseColor("#4CAF50")); break;
+                    case "reviewer": indicator.setBackgroundColor(Color.parseColor("#FFC107")); break;
+                }
+
+                return convertView;
             }
         };
         lvAllUsers.setAdapter(adapter);
+    }
+
+    private void updateStatistics() {
+        int total = userList.size();
+        int managers = 0, annotators = 0, reviewers = 0;
+        for (User u : userList) {
+            switch (u.getRole().toLowerCase()) {
+                case "manager": managers++; break;
+                case "annotator": annotators++; break;
+                case "reviewer": reviewers++; break;
+            }
+        }
+        tvStatTotal.setText(String.valueOf(total));
+        tvStatManager.setText(String.valueOf(managers));
+        tvStatAnnotator.setText(String.valueOf(annotators));
+        tvStatReviewer.setText(String.valueOf(reviewers));
     }
 
     private void showUserActionDialog(User user) {
@@ -93,17 +135,16 @@ public class AllUsersActivity extends AppCompatActivity {
         }
 
         boolean isEnabled = authDbHelper.isUserEnabled(user.getId());
-        String actionText = isEnabled ? "Disable Account" : "Enable Account";
+        String actionText = isEnabled ? "Vô hiệu hóa tài khoản" : "Kích hoạt tài khoản";
 
         new AlertDialog.Builder(this)
-                .setTitle("Manage User: " + user.getUsername())
-                .setMessage("Do you want to " + (isEnabled ? "disable" : "enable") + " this account?")
+                .setTitle("Quản lý: " + user.getFullName())
+                .setMessage("Bạn có chắc chắn muốn " + (isEnabled ? "vô hiệu hóa" : "kích hoạt") + " tài khoản này?")
                 .setPositiveButton(actionText, (dialog, which) -> {
                     authDbHelper.updateUserStatus(user.getId(), !isEnabled);
-                    Toast.makeText(this, "Status updated", Toast.LENGTH_SHORT).show();
                     refreshUserList();
                 })
-                .setNegativeButton("Cancel", null)
+                .setNegativeButton("Hủy", null)
                 .show();
     }
 }

@@ -18,15 +18,88 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Nhấn vào người dùng để Bật/Tắt trạng thái"
+        android:text="Thống kê hệ thống"
         android:textColor="@color/text_secondary"
         android:textSize="14sp" />
+
+    <!-- Role Stats Section -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:weightSum="4">
+
+        <LinearLayout
+            android:id="@+id/chipAll"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="4dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ALL" android:textColor="@color/text_secondary" android:textSize="10sp" />
+            <TextView android:id="@+id/tvStatTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/white" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chipManager"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginHorizontal="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MGR" android:textColor="@color/text_secondary" android:textSize="10sp" />
+            <TextView android:id="@+id/tvStatManager" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/white" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chipAnnotator"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginHorizontal="2dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="ANNO" android:textColor="@color/text_secondary" android:textSize="10sp" />
+            <TextView android:id="@+id/tvStatAnnotator" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/white" android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/chipReviewer"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@drawable/bg_glass_card"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginStart="4dp">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="REV" android:textColor="@color/text_secondary" android:textSize="10sp" />
+            <TextView android:id="@+id/tvStatReviewer" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0" android:textColor="@color/white" android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 
     <ListView
         android:id="@+id/lvAllUsers"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="16dp"
         android:layout_weight="1"
         android:divider="@android:color/transparent"
         android:dividerHeight="8dp" />
