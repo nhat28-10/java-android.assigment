@@ -3,14 +3,19 @@ package com.example.groupassignment.manager;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.TextUtils;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -21,12 +26,13 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
-import com.example.groupassignment.utils.RoleNavigation;
-import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
 import com.example.groupassignment.manager.model.DatasetSourceItem;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 
+import java.util.List;
 import java.util.Locale;
 
 public class DatasetDetailActivity extends AppCompatActivity {
@@ -161,7 +167,9 @@ public class DatasetDetailActivity extends AppCompatActivity {
         btnBackDatasetDetail.setOnClickListener(v -> finish());
 
         btnEditDatasetDetail.setOnClickListener(v -> {
-            if (currentDataset == null) return;
+            if (currentDataset == null) {
+                return;
+            }
 
             Intent intent = new Intent(DatasetDetailActivity.this, CreateDatasetActivity.class);
             intent.putExtra(DatasetsActivity.EXTRA_DATASET_MODE, DatasetsActivity.MODE_EDIT);
@@ -173,7 +181,9 @@ public class DatasetDetailActivity extends AppCompatActivity {
     }
 
     private void showDeleteConfirmDialog() {
-        if (currentDataset == null) return;
+        if (currentDataset == null) {
+            return;
+        }
 
         new AlertDialog.Builder(this)
                 .setTitle("Delete dataset")
@@ -184,7 +194,9 @@ public class DatasetDetailActivity extends AppCompatActivity {
     }
 
     private void deleteCurrentDataset() {
-        if (currentDataset == null) return;
+        if (currentDataset == null) {
+            return;
+        }
 
         int deletedRows = datasetDbHelper.deleteDatasetById(currentDataset.getId());
         if (deletedRows > 0) {
@@ -201,7 +213,9 @@ public class DatasetDetailActivity extends AppCompatActivity {
     }
 
     private void bindDatasetData(DatasetItem item) {
-        if (item == null) return;
+        if (item == null) {
+            return;
+        }
 
         tvDatasetNameDetail.setText(safeText(item.getName()));
         tvDatasetDescriptionDetail.setText(safeText(item.getDescription()));
@@ -229,7 +243,7 @@ public class DatasetDetailActivity extends AppCompatActivity {
 
     private void renderSourceItems(int datasetId) {
         layoutSourceItems.removeAllViews();
-        java.util.List<DatasetSourceItem> sourceItems = datasetDbHelper.getDatasetItemsForDataset(datasetId);
+        List<DatasetSourceItem> sourceItems = datasetDbHelper.getDatasetItemsForDataset(datasetId);
         tvSourceItemsSummary.setText(String.format(Locale.getDefault(), "Source Items (%d)", sourceItems.size()));
         tvEmptySourceItems.setVisibility(sourceItems.isEmpty() ? View.VISIBLE : View.GONE);
 
@@ -246,23 +260,131 @@ public class DatasetDetailActivity extends AppCompatActivity {
         );
         params.bottomMargin = dp(10);
         container.setLayoutParams(params);
-        container.setOrientation(LinearLayout.VERTICAL);
-        container.setPadding(dp(12), dp(10), dp(12), dp(10));
+        container.setOrientation(LinearLayout.HORIZONTAL);
+        container.setGravity(Gravity.CENTER_VERTICAL);
+        container.setPadding(dp(12), dp(12), dp(12), dp(12));
         container.setBackground(makeRoundedDrawable(0xFF0F172A));
 
-        TextView tvName = new TextView(this);
-        tvName.setTextColor(Color.WHITE);
-        tvName.setTextSize(14f);
+        View preview = buildPreviewPane(sourceItem);
+        LinearLayout.LayoutParams previewParams = new LinearLayout.LayoutParams(dp(92), dp(92));
+        previewParams.rightMargin = dp(12);
+        container.addView(preview, previewParams);
+
+        LinearLayout infoColumn = new LinearLayout(this);
+        infoColumn.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        infoColumn.setOrientation(LinearLayout.VERTICAL);
+
+        TextView tvName = createTextView(15f, Color.WHITE, true);
         tvName.setText(safeText(sourceItem.getItemName()));
+        infoColumn.addView(tvName);
 
-        TextView tvPath = new TextView(this);
-        tvPath.setTextColor(0xFF94A3B8);
-        tvPath.setTextSize(12f);
-        tvPath.setText(safeText(sourceItem.getItemPathOrContent()));
+        TextView tvMeta = createTextView(12f, 0xFF94A3B8, false);
+        tvMeta.setText(SourceItemPreviewHelper.buildSecondaryMetadata(sourceItem));
+        infoColumn.addView(tvMeta);
 
-        container.addView(tvName);
-        container.addView(tvPath);
+        if (SourceItemPreviewHelper.isText(sourceItem)) {
+            TextView tvPreview = createBodyText(
+                    SourceItemPreviewHelper.readTextPreview(this, sourceItem.getItemPathOrContent(), 140),
+                    "Cannot preview text"
+            );
+            infoColumn.addView(tvPreview);
+        } else if (SourceItemPreviewHelper.isAudio(sourceItem)) {
+            TextView tvAudio = createBodyText("Audio file stored successfully", null);
+            infoColumn.addView(tvAudio);
+        }
+
+        TextView tvUri = createTextView(11f, 0xFF64748B, false);
+        tvUri.setText(ellipsizeMiddle(safeText(sourceItem.getItemPathOrContent()), 56));
+        LinearLayout.LayoutParams uriParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        uriParams.topMargin = dp(8);
+        tvUri.setLayoutParams(uriParams);
+        infoColumn.addView(tvUri);
+
+        container.addView(infoColumn);
         return container;
+    }
+
+    private View buildPreviewPane(DatasetSourceItem sourceItem) {
+        LinearLayout wrapper = new LinearLayout(this);
+        wrapper.setOrientation(LinearLayout.VERTICAL);
+        wrapper.setGravity(Gravity.CENTER);
+        wrapper.setPadding(dp(8), dp(8), dp(8), dp(8));
+        wrapper.setBackground(makeRoundedDrawable(0xFF1E293B));
+
+        if (SourceItemPreviewHelper.isImage(sourceItem)) {
+            Bitmap bitmap = SourceItemPreviewHelper.loadImageThumbnail(this, sourceItem.getItemPathOrContent(), dp(92));
+            if (bitmap != null) {
+                ImageView imageView = new ImageView(this);
+                imageView.setLayoutParams(new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                ));
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                imageView.setImageBitmap(bitmap);
+                wrapper.addView(imageView);
+            } else {
+                ImageView imageView = new ImageView(this);
+                imageView.setImageResource(android.R.drawable.ic_menu_report_image);
+                imageView.setColorFilter(Color.WHITE);
+                wrapper.addView(imageView);
+
+                TextView fallback = createTextView(11f, Color.WHITE, true);
+                fallback.setText("Cannot preview image");
+                fallback.setGravity(Gravity.CENTER);
+                fallback.setPadding(0, dp(6), 0, 0);
+                wrapper.addView(fallback);
+            }
+            return wrapper;
+        }
+
+        ImageView icon = new ImageView(this);
+        icon.setImageResource(SourceItemPreviewHelper.isAudio(sourceItem)
+                ? android.R.drawable.ic_media_play
+                : android.R.drawable.ic_menu_edit);
+        icon.setColorFilter(Color.WHITE);
+        wrapper.addView(icon);
+
+        TextView label = createTextView(12f, Color.WHITE, true);
+        label.setText(SourceItemPreviewHelper.isAudio(sourceItem) ? "Audio" : "Text");
+        label.setPadding(0, dp(8), 0, 0);
+        wrapper.addView(label);
+        return wrapper;
+    }
+
+    private TextView createTextView(float textSize, int color, boolean bold) {
+        TextView textView = new TextView(this);
+        textView.setTextSize(textSize);
+        textView.setTextColor(color);
+        if (bold) {
+            textView.setTypeface(textView.getTypeface(), Typeface.BOLD);
+        }
+        return textView;
+    }
+
+    private TextView createBodyText(String text, String fallback) {
+        TextView textView = createTextView(12f, 0xFFE2E8F0, false);
+        textView.setBackground(makeRoundedDrawable(0xFF111827));
+        textView.setPadding(dp(10), dp(8), dp(10), dp(8));
+        textView.setMaxLines(3);
+        textView.setText(TextUtils.isEmpty(text) ? safeText(fallback) : text);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.topMargin = dp(8);
+        textView.setLayoutParams(params);
+        return textView;
+    }
+
+    private String ellipsizeMiddle(String text, int maxLength) {
+        if (TextUtils.isEmpty(text) || text.length() <= maxLength) {
+            return safeText(text);
+        }
+        int keep = Math.max(8, (maxLength - 3) / 2);
+        return text.substring(0, keep) + "..." + text.substring(text.length() - keep);
     }
 
     private String safeText(String text) {
@@ -272,7 +394,7 @@ public class DatasetDetailActivity extends AppCompatActivity {
     private GradientDrawable makeRoundedDrawable(int color) {
         GradientDrawable drawable = new GradientDrawable();
         drawable.setColor(color);
-        drawable.setCornerRadius(dp(999));
+        drawable.setCornerRadius(dp(16));
         return drawable;
     }
 
