@@ -25,6 +25,7 @@
         <activity android:name=".manager.AnnotatorAuditDetailActivity" />
         <activity android:name=".ui.admin.AdminDashboardActivity" />
         <activity android:name=".ui.admin.UserManagementActivity" />
+        <activity android:name=".ui.admin.AllUsersActivity" />
 
         <activity
             android:name=".SplashActivity"
