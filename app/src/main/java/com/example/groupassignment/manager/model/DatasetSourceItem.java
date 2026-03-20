@@ -11,6 +11,7 @@ public class DatasetSourceItem implements Serializable {
     private String mimeType;
     private String itemType;
     private String status;
+    private long sizeBytes = -1L;
     private String createdAt;
     private String updatedAt;
 
@@ -30,6 +31,8 @@ public class DatasetSourceItem implements Serializable {
     public void setItemType(String itemType) { this.itemType = itemType; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public long getSizeBytes() { return sizeBytes; }
+    public void setSizeBytes(long sizeBytes) { this.sizeBytes = sizeBytes; }
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
     public String getUpdatedAt() { return updatedAt; }

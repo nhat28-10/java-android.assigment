@@ -8,14 +8,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.example.groupassignment.auth.model.User;
+import com.example.groupassignment.data.AppDatabaseConfig;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AuthDbHelper extends SQLiteOpenHelper {
-
-    private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 4;
 
     public static final String TABLE_USERS = "users";
 
@@ -27,7 +25,7 @@ public class AuthDbHelper extends SQLiteOpenHelper {
     public static final String COL_ROLE = "role";
 
     public AuthDbHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, AppDatabaseConfig.DATABASE_NAME, null, AppDatabaseConfig.DATABASE_VERSION);
     }
 
     @Override

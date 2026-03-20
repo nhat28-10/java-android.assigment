@@ -265,8 +265,13 @@ public class TaskDbHelper extends SQLiteOpenHelper {
 
         List<Integer> reviewerIds = safeIntList(project.getReviewerIds());
         List<Integer> annotatorIds = safeIntList(project.getAnnotatorIds());
+        List<Integer> effectiveAnnotatorIds = annotatorIds.isEmpty()
+                ? Collections.singletonList(0)
+                : annotatorIds;
+        List<Integer> effectiveReviewerIds = reviewerIds.isEmpty()
+                ? Collections.singletonList(0)
+                : reviewerIds;
         Set<String> desiredKeys = new HashSet<>();
-        int assignmentIndex = 0;
 
         for (Map.Entry<Integer, List<DatasetSourceItem>> entry : datasetItemsByDatasetId.entrySet()) {
             int datasetId = entry.getKey();
@@ -275,71 +280,71 @@ public class TaskDbHelper extends SQLiteOpenHelper {
                 continue;
             }
             for (DatasetSourceItem sourceItem : entry.getValue()) {
-                if (sourceItem == null || reviewerIds.isEmpty()) {
+                if (sourceItem == null) {
                     continue;
                 }
-                int annotatorId = pickAnnotatorId(assignmentIndex, annotatorIds);
-                assignmentIndex++;
-                User annotator = annotatorById.get(annotatorId);
-                String logicalTaskKey = buildLogicalTaskKey(project.getId(), sourceItem.getId(), annotatorId);
-                desiredKeys.add(logicalTaskKey);
+                for (int annotatorId : effectiveAnnotatorIds) {
+                    User annotator = annotatorById.get(annotatorId);
+                    String logicalTaskKey = buildLogicalTaskKey(project.getId(), sourceItem.getId(), annotatorId);
+                    desiredKeys.add(logicalTaskKey);
 
-                int latestRound = Math.max(1, getLatestRoundForLogicalTask(logicalTaskKey));
-                List<TaskItem> latestRows = getRawTasksForLogicalTask(logicalTaskKey, latestRound);
-                boolean keepExistingState = !latestRows.isEmpty();
-                String sharedStatus = keepExistingState ? normalizeStatus(latestRows.get(0).getStatus()) : STATUS_ASSIGNED;
-                String finalStatus = keepExistingState ? normalizeStatus(latestRows.get(0).getFinalStatus()) : STATUS_ASSIGNED;
-                String annotation = keepExistingState ? safeText(latestRows.get(0).getAnnotationResult()) : "";
-                String assignedAt = keepExistingState ? safeText(latestRows.get(0).getAssignedAt()) : getNowText();
-                String startedAt = keepExistingState ? safeText(latestRows.get(0).getStartedAt()) : "";
-                String submittedAt = keepExistingState ? safeText(latestRows.get(0).getSubmittedAt()) : "";
-                String autoRejectedAt = keepExistingState ? safeText(latestRows.get(0).getAutoRejectedAt()) : "";
+                    int latestRound = Math.max(1, getLatestRoundForLogicalTask(logicalTaskKey));
+                    List<TaskItem> latestRows = getRawTasksForLogicalTask(logicalTaskKey, latestRound);
+                    boolean keepExistingState = !latestRows.isEmpty();
+                    String sharedStatus = keepExistingState ? normalizeStatus(latestRows.get(0).getStatus()) : STATUS_ASSIGNED;
+                    String finalStatus = keepExistingState ? normalizeStatus(latestRows.get(0).getFinalStatus()) : STATUS_ASSIGNED;
+                    String annotation = keepExistingState ? safeText(latestRows.get(0).getAnnotationResult()) : "";
+                    String assignedAt = keepExistingState ? safeText(latestRows.get(0).getAssignedAt()) : getNowText();
+                    String startedAt = keepExistingState ? safeText(latestRows.get(0).getStartedAt()) : "";
+                    String submittedAt = keepExistingState ? safeText(latestRows.get(0).getSubmittedAt()) : "";
+                    String autoRejectedAt = keepExistingState ? safeText(latestRows.get(0).getAutoRejectedAt()) : "";
 
-                for (int reviewerId : reviewerIds) {
-                    User reviewer = reviewerById.get(reviewerId);
-                    if (reviewer == null) {
-                        continue;
+                    for (int reviewerId : effectiveReviewerIds) {
+                        User reviewer = reviewerById.get(reviewerId);
+                        String reviewerName = reviewer == null
+                                ? (reviewerId == 0 ? "Waiting reviewer assignment" : "Unknown reviewer")
+                                : safeText(reviewer.getFullName());
+                        TaskItem existing = getTaskByProjectItemReviewer(project.getId(), sourceItem.getId(), reviewerId, logicalTaskKey, latestRound);
+                        if (existing == null) {
+                            insertTask(db,
+                                    project.getId(),
+                                    safeText(project.getName()),
+                                    datasetId,
+                                    safeText(dataset.getName()),
+                                    sourceItem.getId(),
+                                    safeText(sourceItem.getItemName()),
+                                    annotatorId,
+                                    annotator == null ? "Unassigned" : safeText(annotator.getFullName()),
+                                    reviewerId,
+                                    reviewerName,
+                                    normalizeType(sourceItem.getItemType()),
+                                    sharedStatus,
+                                    assignedAt,
+                                    startedAt,
+                                    submittedAt,
+                                    "",
+                                    annotation,
+                                    "",
+                                    "",
+                                    logicalTaskKey,
+                                    latestRound,
+                                    0,
+                                    normalizeDeadline(project.getDeadline()),
+                                    safeText(project.getGuidelines()),
+                                    joinLabels(project.getLabels()),
+                                    "",
+                                    finalStatus,
+                                    autoRejectedAt);
+                        } else {
+                            ContentValues values = buildProjectSyncValues(project, dataset, sourceItem, annotator, reviewer, logicalTaskKey, latestRound);
+                            db.update(TABLE_TASKS, values, COL_ID + "=?", new String[]{String.valueOf(existing.getId())});
+                        }
                     }
-                    TaskItem existing = getTaskByProjectItemReviewer(project.getId(), sourceItem.getId(), reviewerId, logicalTaskKey, latestRound);
-                    if (existing == null) {
-                        insertTask(db,
-                                project.getId(),
-                                safeText(project.getName()),
-                                datasetId,
-                                safeText(dataset.getName()),
-                                sourceItem.getId(),
-                                safeText(sourceItem.getItemName()),
-                                annotatorId,
-                                annotator == null ? "Unassigned" : safeText(annotator.getFullName()),
-                                reviewerId,
-                                safeText(reviewer.getFullName()),
-                                normalizeType(sourceItem.getItemType()),
-                                sharedStatus,
-                                assignedAt,
-                                startedAt,
-                                submittedAt,
-                                "",
-                                annotation,
-                                "",
-                                "",
-                                logicalTaskKey,
-                                latestRound,
-                                0,
-                                normalizeDeadline(project.getDeadline()),
-                                safeText(project.getGuidelines()),
-                                joinLabels(project.getLabels()),
-                                "",
-                                finalStatus,
-                                autoRejectedAt);
-                    } else {
-                        ContentValues values = buildProjectSyncValues(project, dataset, sourceItem, annotator, reviewer, logicalTaskKey, latestRound);
-                        db.update(TABLE_TASKS, values, COL_ID + "=?", new String[]{String.valueOf(existing.getId())});
-                    }
+
+                    removeDeprecatedReviewerRows(db, logicalTaskKey, latestRound, effectiveReviewerIds);
+                    updateDatasetItemStatusFromLogicalTask(logicalTaskKey, latestRound);
+                    recomputeMajorityDecision(logicalTaskKey, latestRound);
                 }
-
-                removeDeprecatedReviewerRows(db, logicalTaskKey, latestRound, reviewerIds);
-                updateDatasetItemStatusFromLogicalTask(logicalTaskKey, latestRound);
-                recomputeMajorityDecision(logicalTaskKey, latestRound);
             }
         }
 
@@ -359,7 +364,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         values.put(COL_DATASET_ITEM_NAME, safeText(sourceItem.getItemName()));
         values.put(COL_ANNOTATOR_ID, annotator == null ? 0 : (int) annotator.getId());
         values.put(COL_ANNOTATOR_NAME, annotator == null ? "Unassigned" : safeText(annotator.getFullName()));
-        values.put(COL_REVIEWER_NAME, reviewer == null ? "" : safeText(reviewer.getFullName()));
+        values.put(COL_REVIEWER_NAME, reviewer == null ? "Waiting reviewer assignment" : safeText(reviewer.getFullName()));
         values.put(COL_TYPE, normalizeType(sourceItem.getItemType()));
         values.put(COL_LOGICAL_TASK_KEY, logicalTaskKey);
         values.put(COL_ROUND_NUMBER, roundNumber);
@@ -998,13 +1003,6 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         } finally {
             cursor.close();
         }
-    }
-
-    private int pickAnnotatorId(int index, List<Integer> annotatorIds) {
-        if (annotatorIds == null || annotatorIds.isEmpty()) {
-            return 0;
-        }
-        return annotatorIds.get(index % annotatorIds.size());
     }
 
     private TaskItem cursorToTask(Cursor cursor) {
