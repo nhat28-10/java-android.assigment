@@ -51,6 +51,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
     public static final String COL_DATASET_NAME = "dataset_name";
     public static final String COL_DATASET_ITEM_ID = "dataset_item_id";
     public static final String COL_DATASET_ITEM_NAME = "dataset_item_name";
+    public static final String COL_SOURCE_URI = "source_uri";
+    public static final String COL_SOURCE_DISPLAY_NAME = "source_display_name";
+    public static final String COL_SOURCE_MIME_TYPE = "source_mime_type";
     public static final String COL_ANNOTATOR_ID = "annotator_id";
     public static final String COL_ANNOTATOR_NAME = "annotator_name";
     public static final String COL_REVIEWER_ID = "reviewer_id";
@@ -114,6 +117,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         createTaskAnnotationsTableIfNeeded(db);
         createAnnotationReviewsTableIfNeeded(db);
         ensureTaskColumns(db);
+        backfillTaskSourceColumns(db);
     }
 
     @Override
@@ -123,6 +127,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         createTaskAnnotationsTableIfNeeded(db);
         createAnnotationReviewsTableIfNeeded(db);
         ensureTaskColumns(db);
+        backfillTaskSourceColumns(db);
     }
 
     @Override
@@ -131,6 +136,7 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         createTaskAnnotationsTableIfNeeded(db);
         createAnnotationReviewsTableIfNeeded(db);
         ensureTaskColumns(db);
+        backfillTaskSourceColumns(db);
     }
 
     private void createTaskTableIfNeeded(SQLiteDatabase db) {
@@ -142,6 +148,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
                 + COL_DATASET_NAME + " TEXT, "
                 + COL_DATASET_ITEM_ID + " INTEGER DEFAULT 0, "
                 + COL_DATASET_ITEM_NAME + " TEXT, "
+                + COL_SOURCE_URI + " TEXT, "
+                + COL_SOURCE_DISPLAY_NAME + " TEXT, "
+                + COL_SOURCE_MIME_TYPE + " TEXT, "
                 + COL_ANNOTATOR_ID + " INTEGER DEFAULT 0, "
                 + COL_ANNOTATOR_NAME + " TEXT, "
                 + COL_REVIEWER_ID + " INTEGER DEFAULT 0, "
@@ -202,6 +211,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
     private void ensureTaskColumns(SQLiteDatabase db) {
         ensureColumn(db, TABLE_TASKS, COL_DATASET_ITEM_ID, "INTEGER DEFAULT 0");
         ensureColumn(db, TABLE_TASKS, COL_DATASET_ITEM_NAME, "TEXT");
+        ensureColumn(db, TABLE_TASKS, COL_SOURCE_URI, "TEXT");
+        ensureColumn(db, TABLE_TASKS, COL_SOURCE_DISPLAY_NAME, "TEXT");
+        ensureColumn(db, TABLE_TASKS, COL_SOURCE_MIME_TYPE, "TEXT");
         ensureColumn(db, TABLE_TASKS, COL_ASSIGNED_AT, "TEXT");
         ensureColumn(db, TABLE_TASKS, COL_STARTED_AT, "TEXT");
         ensureColumn(db, TABLE_TASKS, COL_LOGICAL_TASK_KEY, "TEXT");
@@ -214,6 +226,16 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         ensureColumn(db, TABLE_TASKS, COL_FINAL_STATUS, "TEXT");
         ensureColumn(db, TABLE_TASKS, COL_AUTO_REJECTED_AT, "TEXT");
         ensureColumn(db, TABLE_TASKS, COL_UPDATED_AT, "TEXT");
+    }
+
+    private void backfillTaskSourceColumns(SQLiteDatabase db) {
+        db.execSQL("UPDATE " + TABLE_TASKS + " SET "
+                + COL_SOURCE_URI + " = COALESCE(NULLIF(" + COL_SOURCE_URI + ", ''), (SELECT di." + DatasetDbHelper.COL_ITEM_PATH_OR_CONTENT
+                + " FROM " + DatasetDbHelper.TABLE_DATASET_ITEMS + " di WHERE di." + DatasetDbHelper.COL_ID + " = " + TABLE_TASKS + "." + COL_DATASET_ITEM_ID + " LIMIT 1)), "
+                + COL_SOURCE_DISPLAY_NAME + " = COALESCE(NULLIF(" + COL_SOURCE_DISPLAY_NAME + ", ''), NULLIF(" + COL_DATASET_ITEM_NAME + ", ''), (SELECT di." + DatasetDbHelper.COL_ITEM_NAME
+                + " FROM " + DatasetDbHelper.TABLE_DATASET_ITEMS + " di WHERE di." + DatasetDbHelper.COL_ID + " = " + TABLE_TASKS + "." + COL_DATASET_ITEM_ID + " LIMIT 1)), "
+                + COL_SOURCE_MIME_TYPE + " = COALESCE(NULLIF(" + COL_SOURCE_MIME_TYPE + ", ''), (SELECT di." + DatasetDbHelper.COL_MIME_TYPE
+                + " FROM " + DatasetDbHelper.TABLE_DATASET_ITEMS + " di WHERE di." + DatasetDbHelper.COL_ID + " = " + TABLE_TASKS + "." + COL_DATASET_ITEM_ID + " LIMIT 1))");
     }
 
     private void ensureColumn(SQLiteDatabase db, String tableName, String columnName, String columnType) {
@@ -313,6 +335,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
                                     safeText(dataset.getName()),
                                     sourceItem.getId(),
                                     safeText(sourceItem.getItemName()),
+                                    safeText(sourceItem.getItemPathOrContent()),
+                                    safeText(sourceItem.getItemName()),
+                                    safeText(sourceItem.getMimeType()),
                                     annotatorId,
                                     annotator == null ? "Unassigned" : safeText(annotator.getFullName()),
                                     reviewerId,
@@ -362,6 +387,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         values.put(COL_PROJECT_NAME, safeText(project.getName()));
         values.put(COL_DATASET_NAME, safeText(dataset.getName()));
         values.put(COL_DATASET_ITEM_NAME, safeText(sourceItem.getItemName()));
+        values.put(COL_SOURCE_URI, safeText(sourceItem.getItemPathOrContent()));
+        values.put(COL_SOURCE_DISPLAY_NAME, safeText(sourceItem.getItemName()));
+        values.put(COL_SOURCE_MIME_TYPE, safeText(sourceItem.getMimeType()));
         values.put(COL_ANNOTATOR_ID, annotator == null ? 0 : (int) annotator.getId());
         values.put(COL_ANNOTATOR_NAME, annotator == null ? "Unassigned" : safeText(annotator.getFullName()));
         values.put(COL_REVIEWER_NAME, reviewer == null ? "Waiting reviewer assignment" : safeText(reviewer.getFullName()));
@@ -631,6 +659,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
                     safeText(row.getDatasetName()),
                     row.getDatasetItemId(),
                     safeText(row.getDatasetItemName()),
+                    safeText(row.getSourceUri()),
+                    safeText(row.getSourceDisplayName()),
+                    safeText(row.getSourceMimeType()),
                     row.getAnnotatorId(),
                     safeText(row.getAnnotatorName()),
                     row.getReviewerId(),
@@ -839,6 +870,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         logicalTask.setDatasetName(base.getDatasetName());
         logicalTask.setDatasetItemId(base.getDatasetItemId());
         logicalTask.setDatasetItemName(base.getDatasetItemName());
+        logicalTask.setSourceUri(base.getSourceUri());
+        logicalTask.setSourceDisplayName(base.getSourceDisplayName());
+        logicalTask.setSourceMimeType(base.getSourceMimeType());
         logicalTask.setAnnotatorId(base.getAnnotatorId());
         logicalTask.setAnnotatorName(base.getAnnotatorName());
         logicalTask.setType(base.getType());
@@ -849,8 +883,11 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         logicalTask.setSubmittedAt(base.getSubmittedAt());
         logicalTask.setReviewedAt(base.getReviewedAt());
         logicalTask.setAnnotationResult(buildAnnotationDisplay(base));
+        logicalTask.setAnnotationLabelsRaw(buildAnnotationLabels(base));
+        logicalTask.setAnnotationPayload(buildAnnotationPayloadDisplay(base));
         logicalTask.setGuidelines(base.getProjectGuidelines());
-        logicalTask.setLabelsRaw(base.getProjectLabels());
+        logicalTask.setProjectLabelsRaw(base.getProjectLabels());
+        hydrateSourceInfo(logicalTask, base);
         logicalTask.setDeadline(base.getProjectDeadline());
         logicalTask.setAutoRejectedAt(base.getAutoRejectedAt());
         logicalTask.setUpdatedAt(base.getUpdatedAt());
@@ -892,14 +929,58 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         if (!TextUtils.isEmpty(base.getAnnotationResult())) {
             return base.getAnnotationResult();
         }
+        return buildAnnotationLabels(base);
+    }
+
+    private String buildAnnotationLabels(TaskItem base) {
         List<TaskAnnotationItem> annotations = getAnnotationsForLogicalTask(base.getLogicalTaskKey(), base.getRoundNumber());
         List<String> labels = new ArrayList<>();
         for (TaskAnnotationItem item : annotations) {
-            if (!labels.contains(item.getLabelName())) {
+            if (!TextUtils.isEmpty(item.getLabelName()) && !labels.contains(item.getLabelName())) {
                 labels.add(item.getLabelName());
             }
         }
         return joinLabels(labels);
+    }
+
+    private String buildAnnotationPayloadDisplay(TaskItem base) {
+        List<TaskAnnotationItem> annotations = getAnnotationsForLogicalTask(base.getLogicalTaskKey(), base.getRoundNumber());
+        if (annotations.isEmpty()) {
+            return safeText(base.getAnnotationResult());
+        }
+        List<String> payloads = new ArrayList<>();
+        for (TaskAnnotationItem item : annotations) {
+            String payload = item.getLabelValueOrPayload();
+            if (TextUtils.isEmpty(payload)) {
+                continue;
+            }
+            payloads.add(item.getLabelName() + ": " + payload);
+        }
+        return payloads.isEmpty() ? safeText(base.getAnnotationResult()) : TextUtils.join("\n\n", payloads);
+    }
+
+    private void hydrateSourceInfo(LogicalTaskItem logicalTask, TaskItem base) {
+        if (logicalTask == null || base == null) {
+            return;
+        }
+        if (!TextUtils.isEmpty(logicalTask.getSourceUri())
+                && !TextUtils.isEmpty(logicalTask.getSourceDisplayName())
+                && !TextUtils.isEmpty(logicalTask.getSourceMimeType())) {
+            return;
+        }
+        DatasetSourceItem sourceItem = new DatasetDbHelper(context).getDatasetItemById(base.getDatasetItemId());
+        if (sourceItem == null) {
+            return;
+        }
+        if (TextUtils.isEmpty(logicalTask.getSourceUri())) {
+            logicalTask.setSourceUri(sourceItem.getItemPathOrContent());
+        }
+        if (TextUtils.isEmpty(logicalTask.getSourceDisplayName())) {
+            logicalTask.setSourceDisplayName(sourceItem.getItemName());
+        }
+        if (TextUtils.isEmpty(logicalTask.getSourceMimeType())) {
+            logicalTask.setSourceMimeType(sourceItem.getMimeType());
+        }
     }
 
     private List<TaskItem> queryTasks(String selection, String[] selectionArgs) {
@@ -1014,6 +1095,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         item.setDatasetName(getOptional(cursor, COL_DATASET_NAME));
         item.setDatasetItemId(getOptionalInt(cursor, COL_DATASET_ITEM_ID, 0));
         item.setDatasetItemName(getOptional(cursor, COL_DATASET_ITEM_NAME));
+        item.setSourceUri(getOptional(cursor, COL_SOURCE_URI));
+        item.setSourceDisplayName(getOptional(cursor, COL_SOURCE_DISPLAY_NAME));
+        item.setSourceMimeType(getOptional(cursor, COL_SOURCE_MIME_TYPE));
         item.setAnnotatorId(getOptionalInt(cursor, COL_ANNOTATOR_ID, 0));
         item.setAnnotatorName(getOptional(cursor, COL_ANNOTATOR_NAME));
         item.setReviewerId(getOptionalInt(cursor, COL_REVIEWER_ID, 0));
@@ -1062,6 +1146,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
                             String datasetName,
                             int datasetItemId,
                             String datasetItemName,
+                            String sourceUri,
+                            String sourceDisplayName,
+                            String sourceMimeType,
                             int annotatorId,
                             String annotatorName,
                             int reviewerId,
@@ -1091,6 +1178,9 @@ public class TaskDbHelper extends SQLiteOpenHelper {
         values.put(COL_DATASET_NAME, datasetName);
         values.put(COL_DATASET_ITEM_ID, datasetItemId);
         values.put(COL_DATASET_ITEM_NAME, datasetItemName);
+        values.put(COL_SOURCE_URI, sourceUri);
+        values.put(COL_SOURCE_DISPLAY_NAME, sourceDisplayName);
+        values.put(COL_SOURCE_MIME_TYPE, sourceMimeType);
         values.put(COL_ANNOTATOR_ID, annotatorId);
         values.put(COL_ANNOTATOR_NAME, annotatorName);
         values.put(COL_REVIEWER_ID, reviewerId);
