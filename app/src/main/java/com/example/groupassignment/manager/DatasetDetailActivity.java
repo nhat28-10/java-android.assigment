@@ -7,8 +7,11 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +25,7 @@ import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
+import com.example.groupassignment.manager.model.DatasetSourceItem;
 
 import java.util.Locale;
 
@@ -49,7 +53,10 @@ public class DatasetDetailActivity extends AppCompatActivity {
     private TextView tvPendingItemsDetail;
     private TextView tvRejectedItemsDetail;
     private TextView tvProgressTextDetail;
+    private TextView tvSourceItemsSummary;
+    private TextView tvEmptySourceItems;
 
+    private LinearLayout layoutSourceItems;
     private ProgressBar progressDatasetDetail;
 
     private DatasetItem currentDataset;
@@ -124,7 +131,10 @@ public class DatasetDetailActivity extends AppCompatActivity {
         tvPendingItemsDetail = findViewById(R.id.tvPendingItemsDetail);
         tvRejectedItemsDetail = findViewById(R.id.tvRejectedItemsDetail);
         tvProgressTextDetail = findViewById(R.id.tvProgressTextDetail);
+        tvSourceItemsSummary = findViewById(R.id.tvSourceItemsSummary);
+        tvEmptySourceItems = findViewById(R.id.tvEmptySourceItems);
 
+        layoutSourceItems = findViewById(R.id.layoutSourceItems);
         progressDatasetDetail = findViewById(R.id.progressDatasetDetail);
     }
 
@@ -213,6 +223,46 @@ public class DatasetDetailActivity extends AppCompatActivity {
         progressDatasetDetail.setProgressTintList(
                 ColorStateList.valueOf(getStatusSolidColor(item.getStatusCode()))
         );
+
+        renderSourceItems(item.getId());
+    }
+
+    private void renderSourceItems(int datasetId) {
+        layoutSourceItems.removeAllViews();
+        java.util.List<DatasetSourceItem> sourceItems = datasetDbHelper.getDatasetItemsForDataset(datasetId);
+        tvSourceItemsSummary.setText(String.format(Locale.getDefault(), "Source Items (%d)", sourceItems.size()));
+        tvEmptySourceItems.setVisibility(sourceItems.isEmpty() ? View.VISIBLE : View.GONE);
+
+        for (DatasetSourceItem sourceItem : sourceItems) {
+            layoutSourceItems.addView(buildSourceItemView(sourceItem));
+        }
+    }
+
+    private View buildSourceItemView(DatasetSourceItem sourceItem) {
+        LinearLayout container = new LinearLayout(this);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.bottomMargin = dp(10);
+        container.setLayoutParams(params);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setPadding(dp(12), dp(10), dp(12), dp(10));
+        container.setBackground(makeRoundedDrawable(0xFF0F172A));
+
+        TextView tvName = new TextView(this);
+        tvName.setTextColor(Color.WHITE);
+        tvName.setTextSize(14f);
+        tvName.setText(safeText(sourceItem.getItemName()));
+
+        TextView tvPath = new TextView(this);
+        tvPath.setTextColor(0xFF94A3B8);
+        tvPath.setTextSize(12f);
+        tvPath.setText(safeText(sourceItem.getItemPathOrContent()));
+
+        container.addView(tvName);
+        container.addView(tvPath);
+        return container;
     }
 
     private String safeText(String text) {

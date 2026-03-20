@@ -321,6 +321,32 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         return insertedId;
     }
 
+    public void replaceDatasetItems(int datasetId, List<DatasetSourceItem> items) {
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            db.delete(TABLE_DATASET_ITEMS, COL_DATASET_ID + "=?", new String[]{String.valueOf(datasetId)});
+            if (items != null) {
+                String now = getNowText();
+                for (DatasetSourceItem item : items) {
+                    if (item == null) {
+                        continue;
+                    }
+                    item.setDatasetId(datasetId);
+                    if (TextUtils.isEmpty(item.getCreatedAt())) {
+                        item.setCreatedAt(now);
+                    }
+                    item.setUpdatedAt(TextUtils.isEmpty(item.getUpdatedAt()) ? now : item.getUpdatedAt());
+                    db.insert(TABLE_DATASET_ITEMS, null, toContentValues(item));
+                }
+            }
+            refreshDatasetSummary(db, datasetId);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
     public void assignDatasetsToProject(List<String> datasetNames, int projectId) {
         if (datasetNames == null || datasetNames.isEmpty()) {
             return;
