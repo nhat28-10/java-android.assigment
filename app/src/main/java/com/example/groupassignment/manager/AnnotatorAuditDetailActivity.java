@@ -160,8 +160,8 @@ public class AnnotatorAuditDetailActivity extends AppCompatActivity {
             TextView tvAnnotatorStatus = card.findViewById(R.id.tvAuditAnnotatorStatus);
             TextView tvReviewResult = card.findViewById(R.id.tvAuditReviewResult);
             Button btnViewReviewDetail = card.findViewById(R.id.btnViewReviewDetail);
-            tvTaskId.setText(item.getDatasetName() + " • Round " + item.getRoundNumber());
-            tvTaskPreview.setText("Project: " + item.getProjectName());
+            tvTaskId.setText(item.getDisplaySourceName() + " • Round " + item.getRoundNumber());
+            tvTaskPreview.setText("Project: " + item.getProjectName() + " • Dataset: " + item.getDatasetName());
             tvLabelType.setText(TextUtils.isEmpty(item.getLabelsRaw()) ? "No labels" : item.getLabelsRaw().replace("||", ", "));
             tvAnnotatorStatus.setText(item.getDisplayStatus().toUpperCase(Locale.getDefault()));
             tvReviewResult.setText(item.getApproveCount() + " approve / " + item.getRejectCount() + " reject / " + item.getPendingVotes() + " pending");
@@ -234,12 +234,15 @@ public class AnnotatorAuditDetailActivity extends AppCompatActivity {
 
         addDialogText(root, "Project: " + item.getProjectName(), true);
         addDialogText(root, "Dataset: " + item.getDatasetName(), false);
+        addDialogText(root, "Dataset item: " + item.getDisplaySourceName(), false);
         addDialogText(root, "Annotator: " + item.getAnnotatorName(), false);
         addDialogText(root, "Round: " + item.getRoundNumber(), false);
         addDialogText(root, "Status: " + item.getDisplayStatus(), false);
         addDialogText(root, "Deadline: " + (TextUtils.isEmpty(item.getDeadline()) ? "Not set" : item.getDeadline()), false);
         addDialogText(root, "Guideline: " + (TextUtils.isEmpty(item.getGuidelines()) ? "N/A" : item.getGuidelines()), false);
         addDialogText(root, "Selected labels / annotation: " + (TextUtils.isEmpty(item.getAnnotationResult()) ? "N/A" : item.getAnnotationResult().replace("||", ", ")), false);
+        addDialogText(root, "Assigned at: " + (TextUtils.isEmpty(item.getAssignedAt()) ? "N/A" : item.getAssignedAt()), false);
+        addDialogText(root, "Started at: " + (TextUtils.isEmpty(item.getStartedAt()) ? "N/A" : item.getStartedAt()), false);
 
         StringBuilder voteBuilder = new StringBuilder("Reviewer votes:");
         for (ReviewerVoteItem vote : item.getReviewerVotes()) {

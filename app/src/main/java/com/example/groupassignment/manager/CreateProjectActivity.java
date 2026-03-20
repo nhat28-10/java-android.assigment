@@ -560,6 +560,10 @@ public class CreateProjectActivity extends AppCompatActivity {
             edtGuidelines.setError("Guidelines is required");
             return null;
         }
+        if (TextUtils.isEmpty(deadline)) {
+            showToast("Vui lòng chọn deadline cho project");
+            return null;
+        }
         if (selectedDatasetIds.isEmpty()) {
             showToast("Vui lòng chọn ít nhất 1 dataset");
             return null;
@@ -603,7 +607,7 @@ public class CreateProjectActivity extends AppCompatActivity {
         project.setDescription(description);
         project.setGuidelines(guidelines);
         project.setStatus(status);
-        project.setReviewStatus(TaskDbHelper.STATUS_ASSIGNED);
+        project.setReviewStatus(statusForProjectReviewFlow(status));
         project.setReviewerCount(selectedReviewerIds.size());
         project.setAnnotatorCount(selectedAnnotatorIds.size());
         project.setLastUpdated(new SimpleDateFormat("dd MMM yyyy", Locale.ENGLISH).format(Calendar.getInstance().getTime()));
@@ -655,5 +659,8 @@ public class CreateProjectActivity extends AppCompatActivity {
     private int dp(int value) {
         float density = getResources().getDisplayMetrics().density;
         return Math.round(value * density);
+    }
+    private String statusForProjectReviewFlow(String status) {
+        return "draft".equalsIgnoreCase(status) ? "draft" : TaskDbHelper.STATUS_ASSIGNED;
     }
 }

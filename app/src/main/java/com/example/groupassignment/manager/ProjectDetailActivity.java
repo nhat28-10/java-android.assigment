@@ -20,9 +20,12 @@ import com.example.groupassignment.manager.data.ProjectDbHelper;
 import com.example.groupassignment.manager.model.ProjectItem;
 import com.example.groupassignment.reviewer.data.TaskDbHelper;
 import com.example.groupassignment.reviewer.model.LogicalTaskItem;
+import com.example.groupassignment.reviewer.model.ReviewerVoteItem;
+import com.example.groupassignment.reviewer.model.TaskAnnotationItem;
 import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -190,93 +193,178 @@ public class ProjectDetailActivity extends AppCompatActivity {
         }
         taskDbHelper.refreshExpiredTasks();
         List<LogicalTaskItem> tasks = taskDbHelper.getLogicalTasksForProject(project.getId());
+        List<TaskAnnotationItem> annotations = taskDbHelper.getProjectAnnotations(project.getId());
+
         tvProjectNameDetail.setText(safeText(project.getName()));
         tvProjectDescriptionDetail.setText(safeText(project.getDescription()));
         tvStatusDetail.setText((project.getStatus() == null ? "draft" : project.getStatus()).toUpperCase(Locale.getDefault()));
-        tvReviewStatusDetail.setText("FLOW: " + (tasks.isEmpty() ? TaskDbHelper.STATUS_ASSIGNED : tasks.get(0).getDisplayStatus()).toUpperCase(Locale.getDefault()));
+        tvReviewStatusDetail.setText("FLOW: " + buildProjectFlowStatus(tasks).toUpperCase(Locale.getDefault()));
         tvLastUpdatedDetail.setText("Last updated: " + safeText(project.getLastUpdated()));
         tvGuidelinesDetail.setText("Guidelines: " + safeText(project.getGuidelines()));
         tvReviewModeDetail.setText("Review mode: " + safeText(project.getReviewMode()));
         tvSampleRateDetail.setText("Sample rate: " + project.getSampleRate());
         tvDeadlineDetail.setText("Deadline: " + safeText(project.getDeadline()));
         tvExportFormatDetail.setText("Export format: " + safeText(project.getExportFormat()));
-        tvReviewerCountDetail.setText("Reviewer count: " + project.getReviewerCount());
+        tvReviewerCountDetail.setText("Reviewer count: " + project.getReviewerCount() + " (odd-majority required)");
         tvAnnotatorCountDetail.setText("Annotator count: " + project.getAnnotatorCount());
 
-        int pending = 0;
-        int underReview = 0;
-        int rework = 0;
-        int approved = 0;
-        int rejected = 0;
-        int overdue = 0;
+        Map<String, Integer> taskSummary = buildTaskSummary(tasks);
+        int total = tasks.size();
+        int completed = taskSummary.get("approved_final") + taskSummary.get("rejected_final") + taskSummary.get("overdue");
+        int progress = total == 0 ? 0 : Math.round((completed * 100f) / total);
+        tvTaskSummaryDetail.setText(buildTaskSummaryText(taskSummary, total));
+        tvProgressDetail.setText("Project completion: " + progress + "%\n" + buildReviewerActivitySummary(tasks));
+        tvLabelAnalyticsDetail.setText(buildLabelAnalytics(project, tasks, annotations));
+
+        renderList(layoutLabelsDetail, project.getLabels(), false);
+        renderList(layoutDatasetsDetail, project.getDatasets(), false);
+        renderList(layoutAnnotatorsDetail, project.getAnnotators(), true);
+        renderList(layoutReviewersDetail, project.getReviewers(), false);
+    }
+
+    private String buildProjectFlowStatus(List<LogicalTaskItem> tasks) {
+        if (tasks.isEmpty()) {
+            return TaskDbHelper.STATUS_ASSIGNED;
+        }
+        boolean hasRework = false;
+        boolean hasUnderReview = false;
+        boolean hasInProgress = false;
+        for (LogicalTaskItem task : tasks) {
+            String status = task.getDisplayStatus();
+            if (TaskDbHelper.STATUS_REWORK_REQUIRED.equals(status)) {
+                hasRework = true;
+            } else if (TaskDbHelper.STATUS_SUBMITTED.equals(status) || TaskDbHelper.STATUS_UNDER_REVIEW.equals(status)) {
+                hasUnderReview = true;
+            } else if (TaskDbHelper.STATUS_ASSIGNED.equals(status) || TaskDbHelper.STATUS_IN_PROGRESS.equals(status)) {
+                hasInProgress = true;
+            }
+        }
+        if (hasRework) return TaskDbHelper.STATUS_REWORK_REQUIRED;
+        if (hasUnderReview) return TaskDbHelper.STATUS_UNDER_REVIEW;
+        if (hasInProgress) return TaskDbHelper.STATUS_IN_PROGRESS;
+        return tasks.get(0).getDisplayStatus();
+    }
+
+    private Map<String, Integer> buildTaskSummary(List<LogicalTaskItem> tasks) {
+        Map<String, Integer> summary = new LinkedHashMap<>();
+        summary.put("in_progress", 0);
+        summary.put("under_review", 0);
+        summary.put("rework_required", 0);
+        summary.put("approved_final", 0);
+        summary.put("rejected_final", 0);
+        summary.put("overdue", 0);
         for (LogicalTaskItem task : tasks) {
             String status = task.getDisplayStatus();
             if (TaskDbHelper.STATUS_ASSIGNED.equals(status) || TaskDbHelper.STATUS_IN_PROGRESS.equals(status)) {
-                pending++;
+                summary.put("in_progress", summary.get("in_progress") + 1);
             } else if (TaskDbHelper.STATUS_SUBMITTED.equals(status) || TaskDbHelper.STATUS_UNDER_REVIEW.equals(status)) {
-                underReview++;
+                summary.put("under_review", summary.get("under_review") + 1);
             } else if (TaskDbHelper.STATUS_REWORK_REQUIRED.equals(status)) {
-                rework++;
+                summary.put("rework_required", summary.get("rework_required") + 1);
             } else if (TaskDbHelper.STATUS_APPROVED_FINAL.equals(status)) {
-                approved++;
+                summary.put("approved_final", summary.get("approved_final") + 1);
             } else if (TaskDbHelper.STATUS_REJECTED_FINAL.equals(status)) {
-                rejected++;
+                summary.put("rejected_final", summary.get("rejected_final") + 1);
             } else if (TaskDbHelper.STATUS_OVERDUE.equals(status)) {
-                overdue++;
+                summary.put("overdue", summary.get("overdue") + 1);
             }
         }
-        int total = tasks.size();
-        int completed = approved + rejected + overdue;
-        int progress = total == 0 ? 0 : Math.round((completed * 100f) / total);
-        tvTaskSummaryDetail.setText("Total logical tasks: " + total
-                + "\nPending: " + pending
-                + "\nUnder review: " + underReview
-                + "\nRework required: " + rework
-                + "\nApproved final: " + approved
-                + "\nRejected final: " + rejected
-                + "\nOverdue: " + overdue);
-        tvProgressDetail.setText("Project completion: " + progress + "%");
-        tvLabelAnalyticsDetail.setText(buildLabelAnalytics(project, tasks));
-
-        renderList(layoutLabelsDetail, project.getLabels(), false, 0, 0);
-        renderList(layoutDatasetsDetail, project.getDatasets(), false, 0, 0);
-        renderList(layoutAnnotatorsDetail, project.getAnnotators(), true, project.getId(), 0);
-        renderList(layoutReviewersDetail, project.getReviewers(), false, 0, 0);
+        return summary;
     }
 
-    private String buildLabelAnalytics(ProjectItem project, List<LogicalTaskItem> tasks) {
-        Map<String, int[]> analytics = new LinkedHashMap<>();
-        for (String label : project.getLabels()) {
-            analytics.put(label, new int[]{0, 0, 0});
-        }
+    private String buildTaskSummaryText(Map<String, Integer> summary, int total) {
+        return "Total tasks: " + total
+                + "\nIn progress: " + summary.get("in_progress")
+                + "\nUnder review: " + summary.get("under_review")
+                + "\nRework required: " + summary.get("rework_required")
+                + "\nApproved final: " + summary.get("approved_final")
+                + "\nRejected final: " + summary.get("rejected_final")
+                + "\nOverdue / auto rejected: " + summary.get("overdue");
+    }
+
+    private String buildReviewerActivitySummary(List<LogicalTaskItem> tasks) {
+        Map<String, int[]> reviewerStats = new LinkedHashMap<>();
         for (LogicalTaskItem task : tasks) {
-            List<String> labels = taskDbHelper.parseLabels(task.getAnnotationResult());
-            for (String label : labels) {
-                if (!analytics.containsKey(label)) {
-                    analytics.put(label, new int[]{0, 0, 0});
+            for (ReviewerVoteItem vote : task.getReviewerVotes()) {
+                String reviewerName = safeText(vote.getReviewerName());
+                if (!reviewerStats.containsKey(reviewerName)) {
+                    reviewerStats.put(reviewerName, new int[]{0, 0, 0});
                 }
-                int[] counts = analytics.get(label);
-                if (TaskDbHelper.STATUS_APPROVED_FINAL.equals(task.getDisplayStatus())) {
-                    counts[0]++;
-                } else if (TaskDbHelper.STATUS_REJECTED_FINAL.equals(task.getDisplayStatus()) || TaskDbHelper.STATUS_OVERDUE.equals(task.getDisplayStatus())) {
-                    counts[1]++;
+                int[] stats = reviewerStats.get(reviewerName);
+                if (TaskDbHelper.VOTE_APPROVE.equalsIgnoreCase(vote.getDecision())) {
+                    stats[0]++;
+                } else if (TaskDbHelper.VOTE_REJECT.equalsIgnoreCase(vote.getDecision())) {
+                    stats[1]++;
                 } else {
-                    counts[2]++;
+                    stats[2]++;
                 }
             }
         }
-        StringBuilder builder = new StringBuilder("Label analytics:");
+        if (reviewerStats.isEmpty()) {
+            return "No reviewer activity yet.";
+        }
+        StringBuilder builder = new StringBuilder("Reviewer activity:");
+        for (Map.Entry<String, int[]> entry : reviewerStats.entrySet()) {
+            int[] stats = entry.getValue();
+            builder.append("\n• ").append(entry.getKey())
+                    .append(" → approve ").append(stats[0])
+                    .append(", reject ").append(stats[1])
+                    .append(", pending ").append(stats[2]);
+        }
+        return builder.toString();
+    }
+
+    private String buildLabelAnalytics(ProjectItem project, List<LogicalTaskItem> tasks, List<TaskAnnotationItem> annotations) {
+        Map<String, int[]> analytics = new LinkedHashMap<>();
+        Map<String, List<String>> detailLines = new LinkedHashMap<>();
+        for (String label : project.getLabels()) {
+            analytics.put(label, new int[]{0, 0, 0});
+            detailLines.put(label, new ArrayList<>());
+        }
+        for (TaskAnnotationItem annotation : annotations) {
+            String labelName = annotation.getLabelName();
+            if (!analytics.containsKey(labelName)) {
+                analytics.put(labelName, new int[]{0, 0, 0});
+                detailLines.put(labelName, new ArrayList<>());
+            }
+            int[] counts = analytics.get(labelName);
+            String finalStatus = annotation.getFinalStatus();
+            if (TaskDbHelper.STATUS_APPROVED_FINAL.equals(finalStatus)) {
+                counts[0]++;
+            } else if (TaskDbHelper.STATUS_REJECTED_FINAL.equals(finalStatus) || TaskDbHelper.STATUS_OVERDUE.equals(finalStatus)) {
+                counts[1]++;
+            } else {
+                counts[2]++;
+            }
+            detailLines.get(labelName).add("task#" + annotation.getTaskId()
+                    + " / " + safeText(annotation.getDatasetItemName())
+                    + " / annotator=" + safeText(annotation.getAnnotatorName())
+                    + " / reviews=" + safeText(annotation.getReviewerSummary()));
+        }
+        if (analytics.isEmpty()) {
+            return "No labels captured yet from task annotations.";
+        }
+        StringBuilder builder = new StringBuilder("Structured label audit:");
         for (Map.Entry<String, int[]> entry : analytics.entrySet()) {
             int[] counts = entry.getValue();
             builder.append("\n• ").append(entry.getKey())
                     .append(" → approved ").append(counts[0])
                     .append(", rejected ").append(counts[1])
                     .append(", pending ").append(counts[2]);
+            List<String> samples = detailLines.get(entry.getKey());
+            if (samples != null) {
+                for (int i = 0; i < Math.min(3, samples.size()); i++) {
+                    builder.append("\n   - ").append(samples.get(i));
+                }
+            }
+        }
+        if (tasks.isEmpty()) {
+            builder.append("\nNo logical tasks have been created yet. Add dataset items to generate work units.");
         }
         return builder.toString();
     }
 
-    private void renderList(LinearLayout container, List<String> items, boolean auditClickable, int projectId, int annotatorId) {
+    private void renderList(LinearLayout container, List<String> items, boolean auditClickable) {
         container.removeAllViews();
         if (items == null || items.isEmpty()) {
             TextView empty = new TextView(this);

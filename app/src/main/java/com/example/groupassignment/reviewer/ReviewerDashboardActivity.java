@@ -119,9 +119,9 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
             TextView tvTaskStatus = card.findViewById(R.id.tvTaskStatus);
             Button btnOpenTask = card.findViewById(R.id.btnOpenTask);
 
-            tvTaskId.setText("Logical task • Round " + item.getRoundNumber());
+            tvTaskId.setText(item.getDisplaySourceName() + " • Round " + item.getRoundNumber());
             tvTaskProject.setText("Project: " + item.getProjectName());
-            tvTaskDataset.setText("Dataset: " + item.getDatasetName());
+            tvTaskDataset.setText("Dataset: " + item.getDatasetName() + " • Item: " + item.getDisplaySourceName());
             tvTaskAnnotator.setText("Annotator: " + item.getAnnotatorName());
             tvTaskType.setText("Votes: " + item.getApproveCount() + "/" + item.getRejectCount() + "/" + item.getPendingVotes());
             tvTaskStatus.setText("Status: " + item.getDisplayStatus());

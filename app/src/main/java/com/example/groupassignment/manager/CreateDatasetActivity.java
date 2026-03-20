@@ -84,7 +84,6 @@ public class CreateDatasetActivity extends AppCompatActivity {
         etRejectedItems.setInputType(InputType.TYPE_CLASS_NUMBER);
 
         if (isCreateMode()) {
-            etDatasetDescription.setVisibility(View.GONE);
             etTotalItems.setText("0");
             etApprovedItems.setText("0");
             etSubmittedItems.setText("0");
@@ -172,7 +171,10 @@ public class CreateDatasetActivity extends AppCompatActivity {
         item.setSubmittedItems(parseNumber(etSubmittedItems));
         item.setPendingAnnotationItems(parseNumber(etPendingItems));
         item.setRejectedItems(parseNumber(etRejectedItems));
-        item.setCreatedAt(getNowText());
+        String now = getNowText();
+        item.setCreatedAt(DatasetsActivity.MODE_EDIT.equals(currentMode) && currentDataset != null ? currentDataset.getCreatedAt() : now);
+        item.setUpdatedAt(now);
+        item.setCreatedBy((int) sessionManager.getUserId());
 
         if (DatasetsActivity.MODE_EDIT.equals(currentMode) && currentDataset != null) {
             int updateResult = datasetDbHelper.updateDataset(item);
