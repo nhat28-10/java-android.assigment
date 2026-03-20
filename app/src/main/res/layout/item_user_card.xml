@@ -10,9 +10,9 @@
 
     <View
         android:id="@+id/viewRoleIndicator"
-        android:layout_width="4dp"
+        android:layout_width="6dp"
         android:layout_height="match_parent"
-        android:layout_marginEnd="12dp"
+        android:layout_marginEnd="16dp"
         android:background="@color/cyan_primary" />
 
     <LinearLayout
@@ -25,14 +25,16 @@
             android:id="@+id/tvUserFullName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/text_primary"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02" />
 
         <TextView
             android:id="@+id/tvUserEmail"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
             android:textColor="@color/text_secondary"
             android:textSize="14sp" />
 
@@ -40,22 +42,22 @@
             android:id="@+id/tvUserRole"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="6dp"
             android:textColor="@color/cyan_primary"
-            android:textSize="12sp"
+            android:textSize="13sp"
             android:textAllCaps="true"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:letterSpacing="0.1" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/tvUserStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_button_secondary"
-        android:paddingHorizontal="12dp"
-        android:paddingVertical="4dp"
-        android:textColor="@color/white"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="6dp"
         android:textSize="12sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:elevation="4dp" />
 
 </LinearLayout>

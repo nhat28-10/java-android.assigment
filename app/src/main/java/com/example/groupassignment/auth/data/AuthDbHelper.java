@@ -9,12 +9,16 @@ import android.database.sqlite.SQLiteOpenHelper;
 import com.example.groupassignment.auth.model.User;
 import com.example.groupassignment.data.AppDatabaseConfig;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public class AuthDbHelper extends SQLiteOpenHelper {
 
     public static final String TABLE_USERS = "users";
+    public static final String TABLE_ACTIVITY_LOGS = "activity_logs";
 
     public static final String COL_ID = "id";
     public static final String COL_FULL_NAME = "full_name";
@@ -24,6 +28,13 @@ public class AuthDbHelper extends SQLiteOpenHelper {
     public static final String COL_ROLE = "role";
     public static final String COL_IS_ENABLED = "is_enabled";
 
+    // Activity Logs Columns
+    public static final String COL_LOG_USER_ID = "log_user_id";
+    public static final String COL_LOG_USER_NAME = "log_user_name";
+    public static final String COL_LOG_ACTION = "log_action";
+    public static final String COL_LOG_DETAILS = "log_details";
+    public static final String COL_LOG_TIMESTAMP = "log_timestamp";
+
     public AuthDbHelper(Context context) {
         super(context, AppDatabaseConfig.DATABASE_NAME, null, AppDatabaseConfig.DATABASE_VERSION);
     }
@@ -31,6 +42,7 @@ public class AuthDbHelper extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         createUsersTableIfNeeded(db);
+        createActivityLogsTableIfNeeded(db);
         seedDefaultUsers(db);
     }
 
@@ -38,6 +50,7 @@ public class AuthDbHelper extends SQLiteOpenHelper {
     public void onOpen(SQLiteDatabase db) {
         super.onOpen(db);
         createUsersTableIfNeeded(db);
+        createActivityLogsTableIfNeeded(db);
         ensureIsEnabledColumn(db);
         seedDefaultUsers(db);
     }
@@ -45,6 +58,7 @@ public class AuthDbHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         createUsersTableIfNeeded(db);
+        createActivityLogsTableIfNeeded(db);
         ensureIsEnabledColumn(db);
         seedDefaultUsers(db);
     }
@@ -96,6 +110,29 @@ public class AuthDbHelper extends SQLiteOpenHelper {
                 + ")");
     }
 
+    private void createActivityLogsTableIfNeeded(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS " + TABLE_ACTIVITY_LOGS + " ("
+                + COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + COL_LOG_USER_ID + " INTEGER, "
+                + COL_LOG_USER_NAME + " TEXT, "
+                + COL_LOG_ACTION + " TEXT, "
+                + COL_LOG_DETAILS + " TEXT, "
+                + COL_LOG_TIMESTAMP + " TEXT"
+                + ")");
+    }
+
+    public void logActivity(long userId, String userName, String action, String details) {
+        try (SQLiteDatabase db = getWritableDatabase()) {
+            ContentValues values = new ContentValues();
+            values.put(COL_LOG_USER_ID, userId);
+            values.put(COL_LOG_USER_NAME, userName);
+            values.put(COL_LOG_ACTION, action);
+            values.put(COL_LOG_DETAILS, details);
+            values.put(COL_LOG_TIMESTAMP, new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date()));
+            db.insert(TABLE_ACTIVITY_LOGS, null, values);
+        } catch (Exception ignored) {}
+    }
+
     public long registerUser(User user) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -105,32 +142,24 @@ public class AuthDbHelper extends SQLiteOpenHelper {
         values.put(COL_PASSWORD, user.getPassword());
         values.put(COL_ROLE, user.getRole());
         values.put(COL_IS_ENABLED, 1);
-        return db.insert(TABLE_USERS, null, values);
+        long id = db.insert(TABLE_USERS, null, values);
+        if (id > 0) {
+            logActivity(0, "SYSTEM/ADMIN", "CREATE_USER", "Created user: " + user.getEmail() + " as " + user.getRole());
+        }
+        return id;
     }
 
     public boolean updateUserStatus(long userId, boolean enabled) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(COL_IS_ENABLED, enabled ? 1 : 0);
-        return db.update(TABLE_USERS, values, COL_ID + "=?", new String[]{String.valueOf(userId)}) > 0;
-    }
-
-    public boolean isEmailExists(String email) {
-        SQLiteDatabase db = getReadableDatabase();
-        Cursor cursor = db.query(
-                TABLE_USERS,
-                new String[]{COL_ID},
-                COL_EMAIL + "=?",
-                new String[]{email},
-                null,
-                null,
-                null
-        );
-        try {
-            return cursor.moveToFirst();
-        } finally {
-            cursor.close();
+        boolean success = db.update(TABLE_USERS, values, COL_ID + "=?", new String[]{String.valueOf(userId)}) > 0;
+        if (success) {
+            User user = getUserById(userId);
+            String status = enabled ? "ENABLED" : "DISABLED";
+            logActivity(0, "ADMIN", "STATUS_CHANGE", status + " account: " + (user != null ? user.getEmail() : userId));
         }
+        return success;
     }
 
     public User loginUser(String email, String password) {
@@ -144,6 +173,21 @@ public class AuthDbHelper extends SQLiteOpenHelper {
                 null,
                 null
         );
+        try {
+            if (cursor.moveToFirst()) {
+                User user = cursorToUser(cursor);
+                logActivity(user.getId(), user.getFullName(), "LOGIN", "User logged in");
+                return user;
+            }
+            return null;
+        } finally {
+            cursor.close();
+        }
+    }
+
+    public User getUserById(long userId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USERS, null, COL_ID + "=?", new String[]{String.valueOf(userId)}, null, null, null);
         try {
             return cursor.moveToFirst() ? cursorToUser(cursor) : null;
         } finally {
@@ -213,6 +257,45 @@ public class AuthDbHelper extends SQLiteOpenHelper {
         return users;
     }
 
+    public List<ActivityLog> getAllActivityLogs() {
+        List<ActivityLog> logs = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_ACTIVITY_LOGS, null, null, null, null, null, COL_ID + " DESC");
+        try {
+            while (cursor.moveToNext()) {
+                logs.add(new ActivityLog(
+                        cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID)),
+                        cursor.getLong(cursor.getColumnIndexOrThrow(COL_LOG_USER_ID)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COL_LOG_USER_NAME)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COL_LOG_ACTION)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COL_LOG_DETAILS)),
+                        cursor.getString(cursor.getColumnIndexOrThrow(COL_LOG_TIMESTAMP))
+                ));
+            }
+        } finally {
+            cursor.close();
+        }
+        return logs;
+    }
+
+    public static class ActivityLog {
+        public long id;
+        public long userId;
+        public String userName;
+        public String action;
+        public String details;
+        public String timestamp;
+
+        public ActivityLog(long id, long userId, String userName, String action, String details, String timestamp) {
+            this.id = id;
+            this.userId = userId;
+            this.userName = userName;
+            this.action = action;
+            this.details = details;
+            this.timestamp = timestamp;
+        }
+    }
+
     private User cursorToUser(Cursor cursor) {
         long id = cursor.getLong(cursor.getColumnIndexOrThrow(COL_ID));
         String fullName = cursor.getString(cursor.getColumnIndexOrThrow(COL_FULL_NAME));
@@ -234,5 +317,15 @@ public class AuthDbHelper extends SQLiteOpenHelper {
             cursor.close();
         }
         return false;
+    }
+
+    public boolean isEmailExists(String email) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_USERS, new String[]{COL_ID}, COL_EMAIL + "=?", new String[]{email}, null, null, null);
+        try {
+            return cursor.moveToFirst();
+        } finally {
+            cursor.close();
+        }
     }
 }

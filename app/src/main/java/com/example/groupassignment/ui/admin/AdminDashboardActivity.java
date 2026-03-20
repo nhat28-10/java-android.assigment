@@ -10,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
 import com.example.groupassignment.auth.LoginActivity;
-import com.example.groupassignment.auth.data.AuthDbHelper;
 import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 
@@ -40,18 +39,17 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         tvWelcome.setText("Welcome " + sessionManager.getName());
 
-        // Nút chính: Xem danh sách và Bật/Tắt trạng thái
         btnAllUsers.setOnClickListener(v ->
                 startActivity(new Intent(AdminDashboardActivity.this, AllUsersActivity.class))
         );
 
-        // Nút phụ: Chỉ dùng để thêm mới
         btnCreateUser.setOnClickListener(v ->
                 startActivity(new Intent(AdminDashboardActivity.this, UserManagementActivity.class))
         );
 
+        // Kích hoạt tính năng Nhật ký hoạt động
         btnActivityLogs.setOnClickListener(v -> 
-                Toast.makeText(this, "Tính năng đang phát triển", Toast.LENGTH_SHORT).show()
+                startActivity(new Intent(AdminDashboardActivity.this, ActivityLogsActivity.class))
         );
 
         btnLogout.setOnClickListener(v -> {
