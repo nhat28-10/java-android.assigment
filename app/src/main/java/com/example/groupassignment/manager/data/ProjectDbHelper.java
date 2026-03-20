@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import com.example.groupassignment.data.AppDatabaseConfig;
 import com.example.groupassignment.manager.model.ProjectItem;
 
 import java.util.ArrayList;
@@ -14,8 +15,6 @@ import java.util.List;
 
 public class ProjectDbHelper extends SQLiteOpenHelper {
 
-    private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 2;
 
     public static final String TABLE_PROJECTS = "projects";
 
@@ -41,7 +40,7 @@ public class ProjectDbHelper extends SQLiteOpenHelper {
     public static final String COL_REVIEWER_IDS = "reviewer_ids";
 
     public ProjectDbHelper(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        super(context, AppDatabaseConfig.DATABASE_NAME, null, AppDatabaseConfig.DATABASE_VERSION);
     }
 
     @Override

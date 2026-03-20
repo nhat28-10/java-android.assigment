@@ -12,11 +12,15 @@ public class LogicalTaskItem implements Serializable {
     private String projectName;
     private int datasetId;
     private String datasetName;
+    private int datasetItemId;
+    private String datasetItemName;
     private int annotatorId;
     private String annotatorName;
     private String type;
     private String status;
     private String finalStatus;
+    private String assignedAt;
+    private String startedAt;
     private String submittedAt;
     private String reviewedAt;
     private String annotationResult;
@@ -29,6 +33,8 @@ public class LogicalTaskItem implements Serializable {
     private int pendingVotes;
     private boolean deadlinePassed;
     private boolean finalDecisionReached;
+    private String autoRejectedAt;
+    private String updatedAt;
     private final List<ReviewerVoteItem> reviewerVotes = new ArrayList<>();
 
     public int getReferenceTaskId() { return referenceTaskId; }
@@ -45,6 +51,10 @@ public class LogicalTaskItem implements Serializable {
     public void setDatasetId(int datasetId) { this.datasetId = datasetId; }
     public String getDatasetName() { return datasetName; }
     public void setDatasetName(String datasetName) { this.datasetName = datasetName; }
+    public int getDatasetItemId() { return datasetItemId; }
+    public void setDatasetItemId(int datasetItemId) { this.datasetItemId = datasetItemId; }
+    public String getDatasetItemName() { return datasetItemName; }
+    public void setDatasetItemName(String datasetItemName) { this.datasetItemName = datasetItemName; }
     public int getAnnotatorId() { return annotatorId; }
     public void setAnnotatorId(int annotatorId) { this.annotatorId = annotatorId; }
     public String getAnnotatorName() { return annotatorName; }
@@ -55,6 +65,10 @@ public class LogicalTaskItem implements Serializable {
     public void setStatus(String status) { this.status = status; }
     public String getFinalStatus() { return finalStatus; }
     public void setFinalStatus(String finalStatus) { this.finalStatus = finalStatus; }
+    public String getAssignedAt() { return assignedAt; }
+    public void setAssignedAt(String assignedAt) { this.assignedAt = assignedAt; }
+    public String getStartedAt() { return startedAt; }
+    public void setStartedAt(String startedAt) { this.startedAt = startedAt; }
     public String getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(String submittedAt) { this.submittedAt = submittedAt; }
     public String getReviewedAt() { return reviewedAt; }
@@ -79,6 +93,10 @@ public class LogicalTaskItem implements Serializable {
     public void setDeadlinePassed(boolean deadlinePassed) { this.deadlinePassed = deadlinePassed; }
     public boolean isFinalDecisionReached() { return finalDecisionReached; }
     public void setFinalDecisionReached(boolean finalDecisionReached) { this.finalDecisionReached = finalDecisionReached; }
+    public String getAutoRejectedAt() { return autoRejectedAt; }
+    public void setAutoRejectedAt(String autoRejectedAt) { this.autoRejectedAt = autoRejectedAt; }
+    public String getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
     public List<ReviewerVoteItem> getReviewerVotes() { return reviewerVotes; }
 
     public String getDisplayStatus() {
@@ -86,5 +104,12 @@ public class LogicalTaskItem implements Serializable {
             return finalStatus;
         }
         return status;
+    }
+
+    public String getDisplaySourceName() {
+        if (datasetItemName != null && !datasetItemName.trim().isEmpty()) {
+            return datasetItemName;
+        }
+        return datasetName;
     }
 }

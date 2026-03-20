@@ -103,11 +103,11 @@ public class ReviewerTaskActivity extends AppCompatActivity {
     }
 
     private void bindTask(LogicalTaskItem item) {
-        tvTaskTitle.setText("Review Logical Task • Round " + item.getRoundNumber());
+        tvTaskTitle.setText("Review Task • " + item.getDisplaySourceName() + " • Round " + item.getRoundNumber());
         tvProjectName.setText(item.getProjectName());
-        tvDatasetName.setText(item.getDatasetName());
+        tvDatasetName.setText(item.getDatasetName() + " • " + item.getDisplaySourceName());
         tvAnnotatorName.setText(item.getAnnotatorName());
-        tvTaskType.setText(item.getType());
+        tvTaskType.setText(item.getType() + " • Assigned: " + safeText(item.getAssignedAt()));
         tvTaskStatus.setText(item.getDisplayStatus());
         tvSubmittedAt.setText(safeText(item.getSubmittedAt()));
         tvReviewedAt.setText(safeText(item.getReviewedAt()));

@@ -6,12 +6,16 @@ public class TaskItem {
     private String projectName;
     private int datasetId;
     private String datasetName;
+    private int datasetItemId;
+    private String datasetItemName;
     private int annotatorId;
     private String annotatorName;
     private int reviewerId;
     private String reviewerName;
     private String type;
     private String status;
+    private String assignedAt;
+    private String startedAt;
     private String submittedAt;
     private String reviewedAt;
     private String annotationResult;
@@ -19,11 +23,13 @@ public class TaskItem {
     private String rejectionReason;
     private String logicalTaskKey;
     private int roundNumber;
+    private int previousRoundTaskId;
     private String projectDeadline;
     private String projectGuidelines;
     private String projectLabels;
     private String voteDecision;
     private String finalStatus;
+    private String autoRejectedAt;
     private String updatedAt;
 
     public int getId() { return id; }
@@ -36,6 +42,10 @@ public class TaskItem {
     public void setDatasetId(int datasetId) { this.datasetId = datasetId; }
     public String getDatasetName() { return datasetName; }
     public void setDatasetName(String datasetName) { this.datasetName = datasetName; }
+    public int getDatasetItemId() { return datasetItemId; }
+    public void setDatasetItemId(int datasetItemId) { this.datasetItemId = datasetItemId; }
+    public String getDatasetItemName() { return datasetItemName; }
+    public void setDatasetItemName(String datasetItemName) { this.datasetItemName = datasetItemName; }
     public int getAnnotatorId() { return annotatorId; }
     public void setAnnotatorId(int annotatorId) { this.annotatorId = annotatorId; }
     public String getAnnotatorName() { return annotatorName; }
@@ -48,6 +58,10 @@ public class TaskItem {
     public void setType(String type) { this.type = type; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getAssignedAt() { return assignedAt; }
+    public void setAssignedAt(String assignedAt) { this.assignedAt = assignedAt; }
+    public String getStartedAt() { return startedAt; }
+    public void setStartedAt(String startedAt) { this.startedAt = startedAt; }
     public String getSubmittedAt() { return submittedAt; }
     public void setSubmittedAt(String submittedAt) { this.submittedAt = submittedAt; }
     public String getReviewedAt() { return reviewedAt; }
@@ -62,6 +76,8 @@ public class TaskItem {
     public void setLogicalTaskKey(String logicalTaskKey) { this.logicalTaskKey = logicalTaskKey; }
     public int getRoundNumber() { return roundNumber; }
     public void setRoundNumber(int roundNumber) { this.roundNumber = roundNumber; }
+    public int getPreviousRoundTaskId() { return previousRoundTaskId; }
+    public void setPreviousRoundTaskId(int previousRoundTaskId) { this.previousRoundTaskId = previousRoundTaskId; }
     public String getProjectDeadline() { return projectDeadline; }
     public void setProjectDeadline(String projectDeadline) { this.projectDeadline = projectDeadline; }
     public String getProjectGuidelines() { return projectGuidelines; }
@@ -72,6 +88,8 @@ public class TaskItem {
     public void setVoteDecision(String voteDecision) { this.voteDecision = voteDecision; }
     public String getFinalStatus() { return finalStatus; }
     public void setFinalStatus(String finalStatus) { this.finalStatus = finalStatus; }
+    public String getAutoRejectedAt() { return autoRejectedAt; }
+    public void setAutoRejectedAt(String autoRejectedAt) { this.autoRejectedAt = autoRejectedAt; }
     public String getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 

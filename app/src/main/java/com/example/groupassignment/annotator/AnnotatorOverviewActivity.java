@@ -135,9 +135,9 @@ public class AnnotatorOverviewActivity extends AppCompatActivity {
             TextView tvTaskStatus = card.findViewById(R.id.tvTaskStatus);
             Button btnOpenTaskCard = card.findViewById(R.id.btnOpenTask);
 
-            tvTaskId.setText("Task Round #" + item.getRoundNumber());
+            tvTaskId.setText(item.getDisplaySourceName() + " • Round #" + item.getRoundNumber());
             tvTaskProject.setText("Project: " + item.getProjectName());
-            tvTaskDataset.setText("Dataset: " + item.getDatasetName());
+            tvTaskDataset.setText("Dataset: " + item.getDatasetName() + " • Item: " + item.getDisplaySourceName());
             tvTaskAnnotator.setText("Labels: " + (item.getLabelsRaw().isEmpty() ? "N/A" : item.getLabelsRaw().replace("||", ", ")));
             tvTaskType.setText("Votes: " + item.getApproveCount() + " approve / " + item.getRejectCount() + " reject / " + item.getPendingVotes() + " pending");
             tvTaskStatus.setText("Status: " + item.getDisplayStatus());

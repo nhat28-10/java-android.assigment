@@ -89,8 +89,8 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
 
         taskId = currentTask.getReferenceTaskId();
         tvProjectName.setText("Project: " + currentTask.getProjectName());
-        tvDatasetName.setText("Dataset: " + currentTask.getDatasetName() + " • Round " + currentTask.getRoundNumber());
-        tvStatus.setText("Status: " + currentTask.getDisplayStatus());
+        tvDatasetName.setText("Dataset: " + currentTask.getDatasetName() + " • Item: " + currentTask.getDisplaySourceName() + " • Round " + currentTask.getRoundNumber());
+        tvStatus.setText("Status: " + currentTask.getDisplayStatus() + " • Assigned: " + (TextUtils.isEmpty(currentTask.getAssignedAt()) ? "N/A" : currentTask.getAssignedAt()));
         tvDeadline.setText("Deadline: " + (TextUtils.isEmpty(currentTask.getDeadline()) ? "Not set" : currentTask.getDeadline()));
         tvLabels.setText("Project labels: " + (TextUtils.isEmpty(currentTask.getLabelsRaw()) ? "N/A" : currentTask.getLabelsRaw().replace("||", ", ")));
         tvInstructions.setText("Guideline:\n" + (TextUtils.isEmpty(currentTask.getGuidelines()) ? "No guideline provided" : currentTask.getGuidelines()));
