@@ -23,40 +23,15 @@
             android:id="@+id/tvProjectName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
             android:textColor="@color/text_primary" />
-
-        <TextView
-            android:id="@+id/tvDatasetName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/text_secondary" />
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/cyan_primary" />
-
-        <TextView
-            android:id="@+id/tvDeadline"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="@color/text_secondary" />
-
-        <TextView
-            android:id="@+id/tvLabels"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:textColor="@color/text_secondary" />
-
-        <TextView
-            android:id="@+id/tvInstructions"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:textColor="@color/text_secondary" />
+            android:textColor="@color/cyan_primary"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvReviewerFeedback"
@@ -65,34 +40,86 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_dashboard_card"
             android:padding="12dp"
-            android:textColor="@color/text_secondary" />
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp" />
 
+        <!-- Label Selector Area -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Annotation Result / Selected Labels"
+            android:text="Select Label:"
             android:textColor="@color/text_primary"
-            android:textSize="18sp"
+            android:textSize="14sp"
             android:textStyle="bold" />
 
-        <EditText
-            android:id="@+id/etAnnotation"
+        <HorizontalScrollView
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:background="@drawable/bg_input_dark"
-            android:gravity="top"
-            android:hint="Enter labels separated by comma or new lines"
-            android:inputType="textMultiLine"
-            android:padding="12dp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_muted" />
+            android:scrollbars="none">
 
+            <LinearLayout
+                android:id="@+id/layoutLabelChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingBottom="8dp" />
+        </HorizontalScrollView>
+
+        <!-- Annotation Area -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="400dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_input_dark">
+
+            <com.example.groupassignment.annotator.AnnotationDrawingView
+                android:id="@+id/drawingView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter" />
+
+            <TextView
+                android:id="@+id/tvSourceTextPreview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="12dp"
+                android:textColor="@color/text_primary"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <!-- Tools Area -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:gravity="end"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btnUndo"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:background="@drawable/bg_button_secondary"
+                android:src="@android:drawable/ic_menu_revert"
+                android:contentDescription="Undo" />
+
+            <ImageButton
+                android:id="@+id/btnClear"
+                android:layout_width="54dp"
+                android:layout_height="54dp"
+                android:layout_marginStart="12dp"
+                android:background="@drawable/bg_button_secondary"
+                android:src="@android:drawable/ic_menu_delete"
+                android:contentDescription="Clear All" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="24dp"
             android:orientation="horizontal">
 
             <Button

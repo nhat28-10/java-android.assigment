@@ -15,8 +15,8 @@ import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 
 public class AdminDashboardActivity extends AppCompatActivity {
-    private TextView tvWelcome, tvUserCount;
-    private Button btnUserManagement, btnLogout;
+    private TextView tvWelcome, tvUserCount, tvLogCount;
+    private Button btnUserManagement, btnActivityLogs, btnLogout;
     private SessionManager sessionManager;
     private AuthDbHelper authDbHelper;
 
@@ -36,12 +36,19 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
         tvWelcome = findViewById(R.id.tvWelcome);
         tvUserCount = findViewById(R.id.tvUserCount);
+        tvLogCount = findViewById(R.id.tvLogCount);
         btnUserManagement = findViewById(R.id.btnUserManagement);
+        btnActivityLogs = findViewById(R.id.btnActivityLogs);
         btnLogout = findViewById(R.id.btnLogout);
 
         btnUserManagement.setOnClickListener(v ->
                 startActivity(new Intent(AdminDashboardActivity.this, UserManagementActivity.class))
         );
+
+        btnActivityLogs.setOnClickListener(v -> {
+            // Placeholder for Activity Logs
+            Toast.makeText(this, "Tính năng Quản lý nhật ký hoạt động đang được phát triển", Toast.LENGTH_SHORT).show();
+        });
 
         btnLogout.setOnClickListener(v -> {
             sessionManager.logout();
@@ -63,6 +70,7 @@ public class AdminDashboardActivity extends AppCompatActivity {
 
     private void loadDashboard() {
         tvWelcome.setText("Welcome " + sessionManager.getName());
-        tvUserCount.setText("Total Users: " + authDbHelper.getAllUsers().size());
+        tvUserCount.setText(String.valueOf(authDbHelper.getAllUsers().size()));
+        tvLogCount.setText("0"); // Placeholder
     }
 }
