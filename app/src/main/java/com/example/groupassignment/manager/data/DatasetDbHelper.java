@@ -42,6 +42,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
     public static final String COL_MIME_TYPE = "mime_type";
     public static final String COL_ITEM_TYPE = "item_type";
     public static final String COL_STATUS = "status";
+    public static final String COL_SIZE_BYTES = "size_bytes";
 
     public static final String ITEM_STATUS_PENDING = "pending_annotation";
     public static final String ITEM_STATUS_IN_PROGRESS = "in_progress";
@@ -110,6 +111,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
                 + COL_MIME_TYPE + " TEXT, "
                 + COL_ITEM_TYPE + " TEXT, "
                 + COL_STATUS + " TEXT DEFAULT '" + ITEM_STATUS_PENDING + "', "
+                + COL_SIZE_BYTES + " INTEGER DEFAULT -1, "
                 + COL_CREATED_AT + " TEXT, "
                 + COL_UPDATED_AT + " TEXT"
                 + ")");
@@ -127,6 +129,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         ensureColumn(db, TABLE_DATASET_ITEMS, COL_MIME_TYPE, "TEXT");
         ensureColumn(db, TABLE_DATASET_ITEMS, COL_ITEM_TYPE, "TEXT");
         ensureColumn(db, TABLE_DATASET_ITEMS, COL_STATUS, "TEXT DEFAULT '" + ITEM_STATUS_PENDING + "'");
+        ensureColumn(db, TABLE_DATASET_ITEMS, COL_SIZE_BYTES, "INTEGER DEFAULT -1");
         ensureColumn(db, TABLE_DATASET_ITEMS, COL_CREATED_AT, "TEXT");
         ensureColumn(db, TABLE_DATASET_ITEMS, COL_UPDATED_AT, "TEXT");
     }
@@ -176,6 +179,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
                         values.put(COL_MIME_TYPE, defaultMimeType(datasetType));
                         values.put(COL_ITEM_TYPE, normalizeType(datasetType));
                         values.put(COL_STATUS, ITEM_STATUS_PENDING);
+                        values.put(COL_SIZE_BYTES, -1L);
                         values.put(COL_CREATED_AT, now);
                         values.put(COL_UPDATED_AT, now);
                         db.insert(TABLE_DATASET_ITEMS, null, values);
@@ -487,6 +491,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
             item.setMimeType(defaultMimeType(dataset.getType()));
             item.setItemType(normalizeType(dataset.getType()));
             item.setStatus(ITEM_STATUS_PENDING);
+            item.setSizeBytes(-1L);
             item.setCreatedAt(now);
             item.setUpdatedAt(now);
             db.insert(TABLE_DATASET_ITEMS, null, toContentValues(item));
@@ -585,6 +590,7 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         values.put(COL_MIME_TYPE, item.getMimeType());
         values.put(COL_ITEM_TYPE, normalizeType(item.getItemType()));
         values.put(COL_STATUS, TextUtils.isEmpty(item.getStatus()) ? ITEM_STATUS_PENDING : item.getStatus());
+        values.put(COL_SIZE_BYTES, item.getSizeBytes());
         values.put(COL_CREATED_AT, item.getCreatedAt());
         values.put(COL_UPDATED_AT, item.getUpdatedAt());
         return values;
@@ -618,9 +624,18 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         item.setMimeType(getOptional(cursor, COL_MIME_TYPE));
         item.setItemType(getOptional(cursor, COL_ITEM_TYPE));
         item.setStatus(getOptional(cursor, COL_STATUS));
+        item.setSizeBytes(getOptionalLong(cursor, COL_SIZE_BYTES, -1L));
         item.setCreatedAt(getOptional(cursor, COL_CREATED_AT));
         item.setUpdatedAt(getOptional(cursor, COL_UPDATED_AT));
         return item;
+    }
+
+    private long getOptionalLong(Cursor cursor, String columnName, long fallback) {
+        int index = cursor.getColumnIndex(columnName);
+        if (index < 0 || cursor.isNull(index)) {
+            return fallback;
+        }
+        return cursor.getLong(index);
     }
 
     private int getOptionalInt(Cursor cursor, String columnName, int fallback) {
