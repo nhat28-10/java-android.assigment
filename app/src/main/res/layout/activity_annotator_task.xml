@@ -24,22 +24,32 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Project: Loading..."
             android:textColor="@color/text_primary" />
 
         <TextView
             android:id="@+id/tvDatasetName"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Dataset: Loading..."
             android:textColor="@color/text_secondary" />
 
         <TextView
             android:id="@+id/tvStatus"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Status: Loading..."
             android:textColor="@color/cyan_primary" />
+
+        <TextView
+            android:id="@+id/tvDeadline"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
+            android:id="@+id/tvLabels"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_secondary" />
 
         <TextView
             android:id="@+id/tvInstructions"
@@ -49,10 +59,19 @@
             android:textColor="@color/text_secondary" />
 
         <TextView
+            android:id="@+id/tvReviewerFeedback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_dashboard_card"
+            android:padding="12dp"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Your Annotation"
+            android:text="Annotation Result / Selected Labels"
             android:textColor="@color/text_primary"
             android:textSize="18sp"
             android:textStyle="bold" />
@@ -64,7 +83,7 @@
             android:layout_marginTop="8dp"
             android:background="@drawable/bg_input_dark"
             android:gravity="top"
-            android:hint="Enter your annotation..."
+            android:hint="Enter labels separated by comma or new lines"
             android:inputType="textMultiLine"
             android:padding="12dp"
             android:textColor="@color/text_primary"

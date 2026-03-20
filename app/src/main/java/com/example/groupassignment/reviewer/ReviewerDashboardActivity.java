@@ -17,7 +17,7 @@ import com.example.groupassignment.auth.LoginActivity;
 import com.example.groupassignment.auth.data.AuthDbHelper;
 import com.example.groupassignment.auth.model.User;
 import com.example.groupassignment.reviewer.data.TaskDbHelper;
-import com.example.groupassignment.reviewer.model.TaskItem;
+import com.example.groupassignment.reviewer.model.LogicalTaskItem;
 import com.example.groupassignment.utils.SessionManager;
 
 import java.util.List;
@@ -52,7 +52,7 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
 
         initViews();
         setupResultLauncher();
-        setupActions();
+        btnLogout.setOnClickListener(v -> logout());
         bindDashboardData();
     }
 
@@ -73,18 +73,7 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
     }
 
     private void setupResultLauncher() {
-        taskDetailLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        bindDashboardData();
-                    }
-                }
-        );
-    }
-
-    private void setupActions() {
-        btnLogout.setOnClickListener(v -> logout());
+        taskDetailLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> bindDashboardData());
     }
 
     private void bindDashboardData() {
@@ -95,33 +84,33 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
         tvWelcomeReviewer.setText("Welcome back, " + reviewerName);
 
         int reviewerId = getCurrentReviewerId();
-        taskDbHelper.ensureReviewerTasksSeeded(reviewerId);
-
-        List<TaskItem> allTasks = taskDbHelper.getTasksForReviewer(reviewerId);
-        List<TaskItem> pendingTasks = taskDbHelper.getPendingReviewTasksForReviewer(reviewerId);
-        List<TaskItem> reviewedTasks = taskDbHelper.getReviewedTasksForReviewer(reviewerId);
+        taskDbHelper.refreshExpiredTasks();
+        List<LogicalTaskItem> pendingTasks = taskDbHelper.getPendingLogicalTasksForReviewer(reviewerId);
+        List<LogicalTaskItem> allTasks = taskDbHelper.getLogicalTasksForReviewer(reviewerId);
+        int assignedCount = allTasks.size();
+        int reviewedCount = 0;
+        for (LogicalTaskItem task : allTasks) {
+            if (task.isFinalDecisionReached() || !taskDbHelper.canReviewerVote(task, reviewerId)) {
+                reviewedCount++;
+            }
+        }
 
         tvPendingReview.setText(String.valueOf(pendingTasks.size()));
-        tvReviewed.setText(String.valueOf(reviewedTasks.size()));
-        tvTotalAssigned.setText(String.valueOf(allTasks.size()));
-
-        renderTaskList(allTasks);
+        tvReviewed.setText(String.valueOf(reviewedCount));
+        tvTotalAssigned.setText(String.valueOf(assignedCount));
+        renderTaskList(pendingTasks);
     }
 
-    private void renderTaskList(List<TaskItem> tasks) {
+    private void renderTaskList(List<LogicalTaskItem> tasks) {
         layoutTaskList.removeAllViews();
-
         if (tasks == null || tasks.isEmpty()) {
             tvEmptyTasks.setVisibility(View.VISIBLE);
             return;
         }
-
         tvEmptyTasks.setVisibility(View.GONE);
         LayoutInflater inflater = LayoutInflater.from(this);
-
-        for (TaskItem item : tasks) {
+        for (LogicalTaskItem item : tasks) {
             View card = inflater.inflate(R.layout.item_reviewer_task, layoutTaskList, false);
-
             TextView tvTaskId = card.findViewById(R.id.tvTaskId);
             TextView tvTaskProject = card.findViewById(R.id.tvTaskProject);
             TextView tvTaskDataset = card.findViewById(R.id.tvTaskDataset);
@@ -130,14 +119,13 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
             TextView tvTaskStatus = card.findViewById(R.id.tvTaskStatus);
             Button btnOpenTask = card.findViewById(R.id.btnOpenTask);
 
-            tvTaskId.setText("Task #" + item.getId());
+            tvTaskId.setText("Logical task • Round " + item.getRoundNumber());
             tvTaskProject.setText("Project: " + item.getProjectName());
             tvTaskDataset.setText("Dataset: " + item.getDatasetName());
             tvTaskAnnotator.setText("Annotator: " + item.getAnnotatorName());
-            tvTaskType.setText("Type: " + item.getType());
-            tvTaskStatus.setText("Status: " + item.getStatus());
-
-            btnOpenTask.setOnClickListener(v -> openTaskDetail(item.getId()));
+            tvTaskType.setText("Votes: " + item.getApproveCount() + "/" + item.getRejectCount() + "/" + item.getPendingVotes());
+            tvTaskStatus.setText("Status: " + item.getDisplayStatus());
+            btnOpenTask.setOnClickListener(v -> openTaskDetail(item.getReferenceTaskId()));
             layoutTaskList.addView(card);
         }
     }
@@ -153,7 +141,6 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
         if (sessionUserId > 0) {
             return (int) sessionUserId;
         }
-
         String email = sessionManager.getEmail();
         if (email != null && !email.trim().isEmpty()) {
             AuthDbHelper authDbHelper = new AuthDbHelper(this);
@@ -162,13 +149,11 @@ public class ReviewerDashboardActivity extends AppCompatActivity {
                 return (int) currentUser.getId();
             }
         }
-
         return 1;
     }
 
     private void logout() {
         sessionManager.logout();
-
         Intent intent = new Intent(this, LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

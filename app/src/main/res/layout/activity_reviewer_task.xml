@@ -15,7 +15,6 @@
             android:id="@+id/tvTaskTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Review Task"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -48,6 +47,12 @@
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Reviewed at" android:textColor="@color/text_secondary"/>
             <TextView android:id="@+id/tvReviewedAt" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Labels" android:textColor="@color/text_secondary"/>
+            <TextView android:id="@+id/tvTaskLabels" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Vote summary" android:textColor="@color/text_secondary"/>
+            <TextView android:id="@+id/tvVoteSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Annotation result" android:textColor="@color/text_secondary"/>
             <TextView android:id="@+id/tvAnnotationResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
