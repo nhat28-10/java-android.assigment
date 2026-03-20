@@ -5,17 +5,14 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.text.Editable;
-import android.text.InputType;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -233,121 +230,6 @@ public class DatasetsActivity extends AppCompatActivity {
 
             layoutDatasetList.addView(card);
         }
-    }
-
-    private void showCreateDatasetDialog() {
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(dp(20), dp(12), dp(20), dp(8));
-
-        EditText etName = new EditText(this);
-        etName.setHint("Dataset name");
-
-        Spinner spType = new Spinner(this);
-        String[] types = {"image", "text", "audio"};
-        ArrayAdapter<String> typeAdapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                types
-        );
-        spType.setAdapter(typeAdapter);
-
-        EditText etDescription = new EditText(this);
-        etDescription.setHint("Description");
-
-        EditText etTotalItems = new EditText(this);
-        etTotalItems.setHint("Total items");
-        etTotalItems.setInputType(InputType.TYPE_CLASS_NUMBER);
-
-        TextView tvNote = new TextView(this);
-        tvNote.setText("Bản Android local này đang mô phỏng upload bằng cách nhập Total items.");
-        tvNote.setTextSize(12f);
-        tvNote.setTextColor(0xFF64748B);
-        tvNote.setPadding(0, dp(10), 0, 0);
-
-        root.addView(etName);
-        root.addView(spType);
-        root.addView(etDescription);
-        root.addView(etTotalItems);
-        root.addView(tvNote);
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Create New Dataset")
-                .setView(root)
-                .setNegativeButton("Cancel", null)
-                .setPositiveButton("Create", null)
-                .create();
-
-        dialog.setOnShowListener(d -> {
-            Button positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE);
-            positiveButton.setOnClickListener(v -> {
-                String name = etName.getText().toString().trim();
-                String type = spType.getSelectedItem().toString();
-                String description = etDescription.getText().toString().trim();
-                String totalItemsText = etTotalItems.getText().toString().trim();
-
-                if (name.isEmpty()) {
-                    etName.setError("Nhập tên dataset");
-                    return;
-                }
-
-                if (totalItemsText.isEmpty()) {
-                    etTotalItems.setError("Nhập total items");
-                    return;
-                }
-
-                int totalItems = Integer.parseInt(totalItemsText);
-                if (totalItems < 0) {
-                    etTotalItems.setError("Total items không hợp lệ");
-                    return;
-                }
-
-                DatasetItem newDataset = new DatasetItem(
-                        0,
-                        name,
-                        description.isEmpty() ? "New dataset created by manager." : description,
-                        type,
-                        totalItems,
-                        0,
-                        0,
-                        totalItems,
-                        0,
-                        getNowText()
-                );
-
-                long insertedId = datasetDbHelper.insertDataset(newDataset);
-                if (insertedId > 0) {
-                    dialog.dismiss();
-                    refreshScreen();
-                    Toast.makeText(this, "Tạo dataset thành công", Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(this, "Tạo dataset thất bại", Toast.LENGTH_SHORT).show();
-                }
-            });
-        });
-
-        dialog.show();
-    }
-
-    private void showDatasetDetailDialog(DatasetItem item) {
-        String message =
-                "Tên dataset: " + safeText(item.getName()) + "\n\n" +
-                        "Loại: " + safeText(item.getType()).toUpperCase(Locale.getDefault()) + "\n" +
-                        "Total Items: " + item.getTotalItems() + "\n" +
-                        "Approved: " + item.getApprovedItems() + "\n" +
-                        "Under Review: " + item.getSubmittedItems() + "\n" +
-                        "Pending Annotation: " + item.getPendingAnnotationItems() + "\n" +
-                        "Rejected: " + item.getRejectedItems() + "\n" +
-                        "Progress: " + item.getProgressPercent() + "%\n" +
-                        "Status: " + item.getStatusLabel() + "\n" +
-                        "Created At: " + safeText(item.getCreatedAt()) + "\n\n" +
-                        "Description:\n" + safeText(item.getDescription());
-
-        new AlertDialog.Builder(this)
-                .setTitle("Dataset Detail")
-                .setMessage(message)
-                .setPositiveButton("Close", null)
-                .show();
     }
 
     private void showExportDialog(DatasetItem item) {
