@@ -15,10 +15,9 @@ import com.example.groupassignment.utils.RoleNavigation;
 import com.example.groupassignment.utils.SessionManager;
 
 public class AdminDashboardActivity extends AppCompatActivity {
-    private TextView tvWelcome, tvUserCount, tvLogCount;
-    private Button btnUserManagement, btnActivityLogs, btnLogout;
+    private TextView tvWelcome;
+    private Button btnAllUsers, btnCreateUser, btnActivityLogs, btnLogout;
     private SessionManager sessionManager;
-    private AuthDbHelper authDbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,7 +25,6 @@ public class AdminDashboardActivity extends AppCompatActivity {
         setContentView(R.layout.activity_admin_dashboard);
 
         sessionManager = new SessionManager(this);
-        authDbHelper = new AuthDbHelper(this);
 
         if (!sessionManager.isLoggedIn() || !sessionManager.isAdmin()) {
             Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
@@ -35,42 +33,33 @@ public class AdminDashboardActivity extends AppCompatActivity {
         }
 
         tvWelcome = findViewById(R.id.tvWelcome);
-        tvUserCount = findViewById(R.id.tvUserCount);
-        tvLogCount = findViewById(R.id.tvLogCount);
-        btnUserManagement = findViewById(R.id.btnUserManagement);
+        btnAllUsers = findViewById(R.id.btnAllUsers);
+        btnCreateUser = findViewById(R.id.btnCreateUser);
         btnActivityLogs = findViewById(R.id.btnActivityLogs);
         btnLogout = findViewById(R.id.btnLogout);
 
-        btnUserManagement.setOnClickListener(v ->
+        tvWelcome.setText("Welcome " + sessionManager.getName());
+
+        // Nút chính: Xem danh sách và Bật/Tắt trạng thái
+        btnAllUsers.setOnClickListener(v ->
+                startActivity(new Intent(AdminDashboardActivity.this, AllUsersActivity.class))
+        );
+
+        // Nút phụ: Chỉ dùng để thêm mới
+        btnCreateUser.setOnClickListener(v ->
                 startActivity(new Intent(AdminDashboardActivity.this, UserManagementActivity.class))
         );
 
-        btnActivityLogs.setOnClickListener(v -> {
-            // Placeholder for Activity Logs
-            Toast.makeText(this, "Tính năng Quản lý nhật ký hoạt động đang được phát triển", Toast.LENGTH_SHORT).show();
-        });
+        btnActivityLogs.setOnClickListener(v -> 
+                Toast.makeText(this, "Tính năng đang phát triển", Toast.LENGTH_SHORT).show()
+        );
 
         btnLogout.setOnClickListener(v -> {
             sessionManager.logout();
-            Toast.makeText(AdminDashboardActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(AdminDashboardActivity.this, LoginActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             finish();
         });
-
-        loadDashboard();
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        loadDashboard();
-    }
-
-    private void loadDashboard() {
-        tvWelcome.setText("Welcome " + sessionManager.getName());
-        tvUserCount.setText(String.valueOf(authDbHelper.getAllUsers().size()));
-        tvLogCount.setText("0"); // Placeholder
     }
 }
