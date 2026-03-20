@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -14,10 +15,10 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
-import com.example.groupassignment.utils.RoleNavigation;
-import com.example.groupassignment.utils.SessionManager;
 import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
+import com.example.groupassignment.utils.RoleNavigation;
+import com.example.groupassignment.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -25,13 +26,14 @@ import java.util.Locale;
 
 public class CreateDatasetActivity extends AppCompatActivity {
 
+    public static final String EXTRA_CREATED_DATASET_ID = "extra_created_dataset_id";
+    public static final String EXTRA_CREATED_DATASET_NAME = "extra_created_dataset_name";
+
     private ImageButton btnBackCreateDataset;
     private Button btnSaveDataset;
-
     private EditText etDatasetName;
     private EditText etDatasetDescription;
     private Spinner spDatasetType;
-
     private EditText etTotalItems;
     private EditText etApprovedItems;
     private EditText etSubmittedItems;
@@ -56,7 +58,6 @@ public class CreateDatasetActivity extends AppCompatActivity {
         }
 
         datasetDbHelper = new DatasetDbHelper(this);
-
         initViews();
         setupSpinner();
         readIntentData();
@@ -67,11 +68,9 @@ public class CreateDatasetActivity extends AppCompatActivity {
     private void initViews() {
         btnBackCreateDataset = findViewById(R.id.btnBackCreateDataset);
         btnSaveDataset = findViewById(R.id.btnSaveDataset);
-
         etDatasetName = findViewById(R.id.etDatasetName);
         etDatasetDescription = findViewById(R.id.etDatasetDescription);
         spDatasetType = findViewById(R.id.spDatasetType);
-
         etTotalItems = findViewById(R.id.etTotalItems);
         etApprovedItems = findViewById(R.id.etApprovedItems);
         etSubmittedItems = findViewById(R.id.etSubmittedItems);
@@ -83,36 +82,45 @@ public class CreateDatasetActivity extends AppCompatActivity {
         etSubmittedItems.setInputType(InputType.TYPE_CLASS_NUMBER);
         etPendingItems.setInputType(InputType.TYPE_CLASS_NUMBER);
         etRejectedItems.setInputType(InputType.TYPE_CLASS_NUMBER);
+
+        if (isCreateMode()) {
+            etDatasetDescription.setVisibility(View.GONE);
+            etTotalItems.setText("0");
+            etApprovedItems.setText("0");
+            etSubmittedItems.setText("0");
+            etPendingItems.setText("0");
+            etRejectedItems.setText("0");
+            etTotalItems.setVisibility(View.GONE);
+            etApprovedItems.setVisibility(View.GONE);
+            etSubmittedItems.setVisibility(View.GONE);
+            etPendingItems.setVisibility(View.GONE);
+            etRejectedItems.setVisibility(View.GONE);
+        }
+    }
+
+    private boolean isCreateMode() {
+        return !DatasetsActivity.MODE_EDIT.equals(currentMode);
     }
 
     private void setupSpinner() {
-        String[] types = {"image", "text", "audio"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                types
-        );
+        String[] types = {"image", "audio", "text"};
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, types);
         spDatasetType.setAdapter(adapter);
     }
 
     private void readIntentData() {
         Intent intent = getIntent();
-        if (intent == null) return;
-
+        if (intent == null) {
+            return;
+        }
         String mode = intent.getStringExtra(DatasetsActivity.EXTRA_DATASET_MODE);
         if (mode != null) {
             currentMode = mode;
         }
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            currentDataset = intent.getSerializableExtra(
-                    DatasetsActivity.EXTRA_DATASET_RESULT,
-                    DatasetItem.class
-            );
+            currentDataset = intent.getSerializableExtra(DatasetsActivity.EXTRA_DATASET_RESULT, DatasetItem.class);
         } else {
-            currentDataset = (DatasetItem) intent.getSerializableExtra(
-                    DatasetsActivity.EXTRA_DATASET_RESULT
-            );
+            currentDataset = (DatasetItem) intent.getSerializableExtra(DatasetsActivity.EXTRA_DATASET_RESULT);
         }
     }
 
@@ -120,14 +128,13 @@ public class CreateDatasetActivity extends AppCompatActivity {
         if (!DatasetsActivity.MODE_EDIT.equals(currentMode) || currentDataset == null) {
             return;
         }
-
         etDatasetName.setText(safeText(currentDataset.getName()));
         etDatasetDescription.setText(safeText(currentDataset.getDescription()));
 
         String type = safeText(currentDataset.getType()).toLowerCase(Locale.getDefault());
-        if ("text".equals(type)) {
+        if ("audio".equals(type)) {
             spDatasetType.setSelection(1);
-        } else if ("audio".equals(type)) {
+        } else if ("text".equals(type)) {
             spDatasetType.setSelection(2);
         } else {
             spDatasetType.setSelection(0);
@@ -147,27 +154,8 @@ public class CreateDatasetActivity extends AppCompatActivity {
 
     private void saveDataset() {
         String name = etDatasetName.getText().toString().trim();
-        String description = etDatasetDescription.getText().toString().trim();
-        String type = spDatasetType.getSelectedItem().toString();
-
         if (name.isEmpty()) {
             etDatasetName.setError("Nhập tên dataset");
-            return;
-        }
-
-        int totalItems = parseNumber(etTotalItems, "Nhập total items");
-        int approvedItems = parseNumber(etApprovedItems, "Nhập approved items");
-        int submittedItems = parseNumber(etSubmittedItems, "Nhập under review items");
-        int pendingItems = parseNumber(etPendingItems, "Nhập pending items");
-        int rejectedItems = parseNumber(etRejectedItems, "Nhập rejected items");
-
-        if (totalItems < 0 || approvedItems < 0 || submittedItems < 0 || pendingItems < 0 || rejectedItems < 0) {
-            Toast.makeText(this, "Số lượng không hợp lệ", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (approvedItems > totalItems) {
-            etApprovedItems.setError("Approved không được lớn hơn total");
             return;
         }
 
@@ -177,58 +165,62 @@ public class CreateDatasetActivity extends AppCompatActivity {
         }
 
         item.setName(name);
-        item.setDescription(description);
-        item.setType(type);
-        item.setTotalItems(totalItems);
-        item.setApprovedItems(approvedItems);
-        item.setSubmittedItems(submittedItems);
-        item.setPendingAnnotationItems(pendingItems);
-        item.setRejectedItems(rejectedItems);
+        item.setDescription(etDatasetDescription.getText().toString().trim());
+        item.setType(spDatasetType.getSelectedItem().toString());
+        item.setTotalItems(parseNumber(etTotalItems));
+        item.setApprovedItems(parseNumber(etApprovedItems));
+        item.setSubmittedItems(parseNumber(etSubmittedItems));
+        item.setPendingAnnotationItems(parseNumber(etPendingItems));
+        item.setRejectedItems(parseNumber(etRejectedItems));
         item.setCreatedAt(getNowText());
 
-        long insertResult = -1;
-        int updateResult = 0;
-
         if (DatasetsActivity.MODE_EDIT.equals(currentMode) && currentDataset != null) {
-            updateResult = datasetDbHelper.updateDataset(item);
+            int updateResult = datasetDbHelper.updateDataset(item);
             if (updateResult <= 0) {
                 Toast.makeText(this, "Cập nhật dataset thất bại", Toast.LENGTH_SHORT).show();
                 return;
             }
-        } else {
-            insertResult = datasetDbHelper.insertDataset(item);
-            if (insertResult <= 0) {
-                Toast.makeText(this, "Tạo dataset thất bại", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            item.setId((int) insertResult);
+            deliverDatasetResult(item, false);
+            return;
         }
 
+        long insertResult = datasetDbHelper.insertDataset(item);
+        if (insertResult <= 0) {
+            Toast.makeText(this, "Tạo dataset thất bại", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        item.setId((int) insertResult);
+        deliverDatasetResult(item, true);
+    }
+
+    private void deliverDatasetResult(DatasetItem item, boolean openProjectCreation) {
         Intent resultIntent = new Intent();
         resultIntent.putExtra(DatasetsActivity.EXTRA_DATASET_RESULT, item);
         setResult(RESULT_OK, resultIntent);
 
-        Toast.makeText(
-                this,
+        Toast.makeText(this,
                 DatasetsActivity.MODE_EDIT.equals(currentMode) ? "Dataset updated" : "Dataset created",
-                Toast.LENGTH_SHORT
-        ).show();
+                Toast.LENGTH_SHORT).show();
 
+        if (openProjectCreation) {
+            Intent intent = new Intent(this, CreateProjectActivity.class);
+            intent.putExtra(CreateDatasetActivity.EXTRA_CREATED_DATASET_ID, item.getId());
+            intent.putExtra(CreateDatasetActivity.EXTRA_CREATED_DATASET_NAME, item.getName());
+            intent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_MODE, ManagerProjectsActivity.MODE_CREATE);
+            startActivity(intent);
+        }
         finish();
     }
 
-    private int parseNumber(EditText editText, String errorText) {
+    private int parseNumber(EditText editText) {
         String value = editText.getText().toString().trim();
         if (value.isEmpty()) {
-            editText.setText("0");
             return 0;
         }
-
         try {
             return Integer.parseInt(value);
         } catch (Exception e) {
-            editText.setError(errorText);
-            return -1;
+            return 0;
         }
     }
 
