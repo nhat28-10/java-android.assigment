@@ -8,6 +8,9 @@ public class TaskItem {
     private String datasetName;
     private int datasetItemId;
     private String datasetItemName;
+    private String sourceUri;
+    private String sourceDisplayName;
+    private String sourceMimeType;
     private int annotatorId;
     private String annotatorName;
     private int reviewerId;
@@ -46,6 +49,12 @@ public class TaskItem {
     public void setDatasetItemId(int datasetItemId) { this.datasetItemId = datasetItemId; }
     public String getDatasetItemName() { return datasetItemName; }
     public void setDatasetItemName(String datasetItemName) { this.datasetItemName = datasetItemName; }
+    public String getSourceUri() { return sourceUri; }
+    public void setSourceUri(String sourceUri) { this.sourceUri = sourceUri; }
+    public String getSourceDisplayName() { return sourceDisplayName; }
+    public void setSourceDisplayName(String sourceDisplayName) { this.sourceDisplayName = sourceDisplayName; }
+    public String getSourceMimeType() { return sourceMimeType; }
+    public void setSourceMimeType(String sourceMimeType) { this.sourceMimeType = sourceMimeType; }
     public int getAnnotatorId() { return annotatorId; }
     public void setAnnotatorId(int annotatorId) { this.annotatorId = annotatorId; }
     public String getAnnotatorName() { return annotatorName; }

@@ -27,6 +27,100 @@
             android:orientation="vertical"
             android:padding="12dp">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Source preview"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvSourceMeta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/text_secondary" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp">
+
+                <LinearLayout
+                    android:id="@+id/layoutImagePreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:id="@+id/ivSourcePreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="260dp"
+                        android:adjustViewBounds="true"
+                        android:background="@drawable/bg_input_dark"
+                        android:contentDescription="Source image preview"
+                        android:scaleType="centerCrop" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutAudioPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:visibility="gone">
+
+                    <Button
+                        android:id="@+id/btnPlayAudio"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_cyan"
+                        android:text="Play audio"
+                        android:textAllCaps="false"
+                        android:textColor="@color/cyan_dark_text" />
+
+                    <Button
+                        android:id="@+id/btnPauseAudio"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="8dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_button_secondary"
+                        android:text="Pause"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/layoutTextPreview"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/tvSourceTextPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_input_dark"
+                        android:minHeight="160dp"
+                        android:padding="12dp"
+                        android:textColor="@color/text_primary" />
+                </LinearLayout>
+            </FrameLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_dashboard_card"
+            android:orientation="vertical"
+            android:padding="12dp">
+
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Project" android:textColor="@color/text_secondary"/>
             <TextView android:id="@+id/tvProjectName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
 
@@ -47,15 +141,72 @@
 
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Reviewed at" android:textColor="@color/text_secondary"/>
             <TextView android:id="@+id/tvReviewedAt" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+        </LinearLayout>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Labels" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvTaskLabels" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_dashboard_card"
+            android:orientation="vertical"
+            android:padding="12dp">
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Vote summary" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvVoteSummary" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Labels"
+                android:textColor="@color/text_secondary" />
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Annotation result" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvAnnotationResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <TextView
+                android:id="@+id/tvTaskLabels"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Annotation result"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/tvAnnotationResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Annotation payload"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/tvAnnotationPayload"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_input_dark"
+                android:padding="12dp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Vote summary"
+                android:textColor="@color/text_secondary" />
+
+            <TextView
+                android:id="@+id/tvVoteSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/text_primary" />
         </LinearLayout>
 
         <TextView

@@ -14,6 +14,9 @@ public class LogicalTaskItem implements Serializable {
     private String datasetName;
     private int datasetItemId;
     private String datasetItemName;
+    private String sourceUri;
+    private String sourceDisplayName;
+    private String sourceMimeType;
     private int annotatorId;
     private String annotatorName;
     private String type;
@@ -24,8 +27,10 @@ public class LogicalTaskItem implements Serializable {
     private String submittedAt;
     private String reviewedAt;
     private String annotationResult;
+    private String annotationLabelsRaw;
+    private String annotationPayload;
     private String guidelines;
-    private String labelsRaw;
+    private String projectLabelsRaw;
     private String deadline;
     private int reviewerCount;
     private int approveCount;
@@ -55,6 +60,12 @@ public class LogicalTaskItem implements Serializable {
     public void setDatasetItemId(int datasetItemId) { this.datasetItemId = datasetItemId; }
     public String getDatasetItemName() { return datasetItemName; }
     public void setDatasetItemName(String datasetItemName) { this.datasetItemName = datasetItemName; }
+    public String getSourceUri() { return sourceUri; }
+    public void setSourceUri(String sourceUri) { this.sourceUri = sourceUri; }
+    public String getSourceDisplayName() { return sourceDisplayName; }
+    public void setSourceDisplayName(String sourceDisplayName) { this.sourceDisplayName = sourceDisplayName; }
+    public String getSourceMimeType() { return sourceMimeType; }
+    public void setSourceMimeType(String sourceMimeType) { this.sourceMimeType = sourceMimeType; }
     public int getAnnotatorId() { return annotatorId; }
     public void setAnnotatorId(int annotatorId) { this.annotatorId = annotatorId; }
     public String getAnnotatorName() { return annotatorName; }
@@ -75,10 +86,16 @@ public class LogicalTaskItem implements Serializable {
     public void setReviewedAt(String reviewedAt) { this.reviewedAt = reviewedAt; }
     public String getAnnotationResult() { return annotationResult; }
     public void setAnnotationResult(String annotationResult) { this.annotationResult = annotationResult; }
+    public String getAnnotationLabelsRaw() { return annotationLabelsRaw; }
+    public void setAnnotationLabelsRaw(String annotationLabelsRaw) { this.annotationLabelsRaw = annotationLabelsRaw; }
+    public String getAnnotationPayload() { return annotationPayload; }
+    public void setAnnotationPayload(String annotationPayload) { this.annotationPayload = annotationPayload; }
     public String getGuidelines() { return guidelines; }
     public void setGuidelines(String guidelines) { this.guidelines = guidelines; }
-    public String getLabelsRaw() { return labelsRaw; }
-    public void setLabelsRaw(String labelsRaw) { this.labelsRaw = labelsRaw; }
+    public String getProjectLabelsRaw() { return projectLabelsRaw; }
+    public void setProjectLabelsRaw(String projectLabelsRaw) { this.projectLabelsRaw = projectLabelsRaw; }
+    public String getLabelsRaw() { return projectLabelsRaw; }
+    public void setLabelsRaw(String labelsRaw) { this.projectLabelsRaw = labelsRaw; }
     public String getDeadline() { return deadline; }
     public void setDeadline(String deadline) { this.deadline = deadline; }
     public int getReviewerCount() { return reviewerCount; }
@@ -107,6 +124,9 @@ public class LogicalTaskItem implements Serializable {
     }
 
     public String getDisplaySourceName() {
+        if (sourceDisplayName != null && !sourceDisplayName.trim().isEmpty()) {
+            return sourceDisplayName;
+        }
         if (datasetItemName != null && !datasetItemName.trim().isEmpty()) {
             return datasetItemName;
         }

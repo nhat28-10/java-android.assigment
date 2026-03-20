@@ -311,6 +311,23 @@ public class DatasetDbHelper extends SQLiteOpenHelper {
         return items;
     }
 
+    public DatasetSourceItem getDatasetItemById(int datasetItemId) {
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(TABLE_DATASET_ITEMS,
+                null,
+                COL_ID + "=?",
+                new String[]{String.valueOf(datasetItemId)},
+                null,
+                null,
+                null,
+                "1");
+        try {
+            return cursor.moveToFirst() ? cursorToDatasetSource(cursor) : null;
+        } finally {
+            cursor.close();
+        }
+    }
+
     public long insertDatasetItem(DatasetSourceItem item) {
         SQLiteDatabase db = getWritableDatabase();
         String now = getNowText();
