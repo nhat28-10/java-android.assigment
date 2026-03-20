@@ -1,7 +1,9 @@
 package com.example.groupassignment;
 
+import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -11,27 +13,21 @@ import com.example.groupassignment.utils.SessionManager;
 
 public class SplashActivity extends AppCompatActivity {
 
-    private static final String TAG = "SplashActivity";
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // Có thể thêm layout splash nếu muốn: setContentView(R.layout.activity_splash);
 
-        try {
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
             SessionManager sessionManager = new SessionManager(this);
 
             if (!sessionManager.isLoggedIn()) {
-                startActivity(RoleNavigation.buildHomeIntent(this, null));
-                finish();
-                return;
+                Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+                startActivity(intent);
+            } else {
+                startActivity(RoleNavigation.buildHomeIntent(this, sessionManager.getRole()));
             }
-
-            startActivity(RoleNavigation.buildHomeIntent(this, sessionManager.getRole()));
             finish();
-        } catch (Exception e) {
-            Log.e(TAG, "Error in SplashActivity", e);
-            startActivity(RoleNavigation.buildHomeIntent(this, null));
-            finish();
-        }
+        }, 500); // Delay 500ms để đảm bảo hệ thống ổn định
     }
 }

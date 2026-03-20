@@ -28,64 +28,69 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     private Button btnProjects, btnDatasets, btnLogout;
 
     private ProjectDbHelper projectDbHelper;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        sessionManager = new SessionManager(this);
+        if (!sessionManager.isLoggedIn() || (!sessionManager.isManager() && !sessionManager.isAdmin())) {
+            Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
+            redirectToLogin();
+            return;
+        }
+
         setContentView(R.layout.activity_manager_dashboard);
 
         try {
-            SessionManager sessionManager = new SessionManager(this);
-            if (!sessionManager.isLoggedIn() || (!sessionManager.isManager() && !sessionManager.isAdmin())) {
-                Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
-                finish();
-                return;
-            }
-
             projectDbHelper = new ProjectDbHelper(this);
-
             initViews();
             bindDashboardData();
             setupActions();
         } catch (Exception e) {
             Log.e(TAG, "Error in onCreate", e);
             Toast.makeText(this, "Error loading dashboard", Toast.LENGTH_SHORT).show();
-            finish();
         }
+    }
+
+    private void redirectToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        bindDashboardData();
+        if (sessionManager.isLoggedIn() && (sessionManager.isManager() || sessionManager.isAdmin())) {
+            bindDashboardData();
+        }
     }
 
     private void initViews() {
         tvWelcomeManager = findViewById(R.id.tvWelcomeManager);
-
         tvActiveProjects = findViewById(R.id.tvActiveProjects);
         tvTotalTasks = findViewById(R.id.tvTotalTasks);
         tvPendingReview = findViewById(R.id.tvPendingReview);
         tvApprovalRate = findViewById(R.id.tvApprovalRate);
-
         tvInProgressCount = findViewById(R.id.tvInProgressCount);
         tvPendingCount = findViewById(R.id.tvPendingCount);
         tvApprovedCount = findViewById(R.id.tvApprovedCount);
         tvRejectedCount = findViewById(R.id.tvRejectedCount);
-
         btnProjects = findViewById(R.id.btnProjects);
         btnDatasets = findViewById(R.id.btnDatasets);
         btnLogout = findViewById(R.id.btnLogout);
     }
 
     private void bindDashboardData() {
-        SessionManager sessionManager = new SessionManager(this);
-        String managerName = sessionManager.getName();
-        if (managerName == null || managerName.isEmpty()) {
-            managerName = "Manager";
-        }
-        tvWelcomeManager.setText("Welcome back, " + managerName);
+        if (tvWelcomeManager == null) return;
 
+        String managerName = sessionManager.getName();
+        tvWelcomeManager.setText("Welcome back, " + (managerName != null ? managerName : "Manager"));
+
+        if (projectDbHelper == null) return;
         List<ProjectItem> projects = projectDbHelper.getAllProjects();
 
         int totalProjects = projects.size();
@@ -117,13 +122,9 @@ public class ManagerDashboardActivity extends AppCompatActivity {
         double approvalRate = reviewedTotal == 0 ? 0.0 : (approvedCount * 100.0 / reviewedTotal);
 
         tvActiveProjects.setText(String.valueOf(activeProjects));
-
-        // Tạm thời dùng vị trí này để hiển thị tổng project cho đến khi bạn có bảng tasks thật
         tvTotalTasks.setText(String.valueOf(totalProjects));
-
         tvPendingReview.setText(String.valueOf(pendingReview));
         tvApprovalRate.setText(String.format(Locale.getDefault(), "%.1f%%", approvalRate));
-
         tvInProgressCount.setText(String.valueOf(inProgressCount));
         tvPendingCount.setText(String.valueOf(pendingReview));
         tvApprovedCount.setText(String.valueOf(approvedCount));
@@ -145,12 +146,7 @@ public class ManagerDashboardActivity extends AppCompatActivity {
     }
 
     private void logout() {
-        SessionManager sessionManager = new SessionManager(this);
         sessionManager.logout();
-
-        Intent intent = new Intent(this, LoginActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
+        redirectToLogin();
     }
 }

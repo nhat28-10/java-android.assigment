@@ -17,6 +17,7 @@ public class TaskItem {
     private String annotationResult;
     private String reviewComments;
     private String rejectionReason;
+    private String imageUri;
 
     public TaskItem() {
     }
@@ -147,6 +148,14 @@ public class TaskItem {
 
     public void setRejectionReason(String rejectionReason) {
         this.rejectionReason = rejectionReason;
+    }
+
+    public String getImageUri() {
+        return imageUri;
+    }
+
+    public void setImageUri(String imageUri) {
+        this.imageUri = imageUri;
     }
 
     public boolean isReviewed() {

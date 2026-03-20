@@ -28,35 +28,75 @@
             android:orientation="vertical"
             android:padding="12dp">
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Project" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvProjectName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Project Info" android:textColor="@color/text_secondary" android:textStyle="bold"/>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Dataset" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvDatasetName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <TextView android:id="@+id/tvProjectName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary" android:textSize="16sp"/>
+            <TextView android:id="@+id/tvDatasetName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_secondary" android:textSize="13sp"/>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Annotator" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvAnnotatorName" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#333" android:layout_marginVertical="8dp"/>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Type" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvTaskType" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Annotator: " android:textColor="@color/text_secondary"/>
+                <TextView android:id="@+id/tvAnnotatorName" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            </LinearLayout>
 
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Status" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvTaskStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Submitted at" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvSubmittedAt" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Reviewed at" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvReviewedAt" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
-
-            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:text="Annotation result" android:textColor="@color/text_secondary"/>
-            <TextView android:id="@+id/tvAnnotationResult" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/text_primary"/>
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginTop="4dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Status: " android:textColor="@color/text_secondary"/>
+                <TextView android:id="@+id/tvTaskStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="@color/cyan_light" android:textStyle="bold"/>
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="16dp"
+            android:text="Annotation Visual Preview"
+            android:textColor="@color/text_primary"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginTop="8dp"
+            android:background="#222">
+
+            <com.example.groupassignment.annotator.AnnotationView
+                android:id="@+id/annotationViewReview"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/bg_input_dark" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <Switch
+                android:id="@+id/swShowLabels"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="true"
+                android:text="Show Labels"
+                android:textColor="@color/text_secondary" />
+
+            <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+
+            <TextView
+                android:id="@+id/tvBoxCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Boxes: 0"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Review comment"
             android:textColor="@color/text_secondary" />
 
@@ -67,8 +107,8 @@
             android:layout_marginTop="6dp"
             android:background="@drawable/bg_input_dark"
             android:gravity="top|start"
-            android:hint="Comment for annotator"
-            android:minHeight="90dp"
+            android:hint="Good work / Needs fix..."
+            android:minHeight="80dp"
             android:padding="12dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_muted" />
@@ -77,7 +117,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:text="Rejection reason"
+            android:text="Rejection reason (Optional)"
             android:textColor="@color/text_secondary" />
 
         <EditText
@@ -86,8 +126,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:background="@drawable/bg_input_dark"
-            android:hint="Required when rejecting"
-            android:minHeight="72dp"
+            android:hint="Why is this rejected?"
+            android:minHeight="60dp"
             android:padding="12dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_muted" />
@@ -95,13 +135,14 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal">
+            android:layout_marginTop="20dp"
+            android:orientation="horizontal"
+            android:paddingBottom="20dp">
 
             <Button
                 android:id="@+id/btnApprove"
                 android:layout_width="0dp"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_cyan"
                 android:text="Approve"
@@ -112,7 +153,7 @@
             <Button
                 android:id="@+id/btnReject"
                 android:layout_width="0dp"
-                android:layout_height="52dp"
+                android:layout_height="54dp"
                 android:layout_marginStart="8dp"
                 android:layout_weight="1"
                 android:background="@drawable/bg_button_secondary"

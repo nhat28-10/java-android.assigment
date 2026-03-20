@@ -27,13 +27,11 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
     public static final String EXTRA_PROJECT_DETAIL = "extra_project_detail";
     public static final String EXTRA_DETAIL_ACTION = "extra_detail_action";
-
-    public static final String ACTION_UPDATED = "updated";
-    public static final String ACTION_DELETED = "deleted";
+    public static final String ACTION_UPDATED = "action_updated";
+    public static final String ACTION_DELETED = "action_deleted";
 
     private ImageButton btnBackDetail;
-    private Button btnEditProjectDetail;
-    private Button btnDeleteProjectDetail;
+    private Button btnEditProjectDetail, btnDeleteProjectDetail;
 
     private TextView tvProjectNameDetail;
     private TextView tvProjectDescriptionDetail;
@@ -158,7 +156,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
             Intent intent = new Intent(ProjectDetailActivity.this, CreateProjectActivity.class);
             intent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_MODE, ManagerProjectsActivity.MODE_EDIT);
-            intent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, currentProject);
+            intent.putExtra("project_id", currentProject.getId());
             editLauncher.launch(intent);
         });
 
@@ -183,12 +181,10 @@ public class ProjectDetailActivity extends AppCompatActivity {
         if (deletedRows > 0) {
             if (currentProject.getDatasetIds() != null && !currentProject.getDatasetIds().isEmpty()) {
                 datasetDbHelper.releaseDatasetsByIds(currentProject.getDatasetIds(), currentProject.getId());
-            } else {
-                datasetDbHelper.releaseDatasetsByNames(currentProject.getDatasets(), currentProject.getId());
             }
             taskDbHelper.deleteTasksByProjectId(currentProject.getId());
 
-            Intent resultIntent = new Intent();
+            Intent resultIntent add. = new Intent();
             resultIntent.putExtra(ManagerProjectsActivity.EXTRA_PROJECT_RESULT, currentProject);
             resultIntent.putExtra(EXTRA_DETAIL_ACTION, ACTION_DELETED);
             setResult(RESULT_OK, resultIntent);
@@ -287,16 +283,7 @@ public class ProjectDetailActivity extends AppCompatActivity {
     }
 
     private void openAnnotatorAudit(String annotatorName) {
-        Intent intent = new Intent(this, AnnotatorAuditDetailActivity.class);
-        intent.putExtra(
-                AnnotatorAuditDetailActivity.EXTRA_PROJECT_NAME,
-                currentProject == null ? "Project" : safeText(currentProject.getName())
-        );
-        intent.putExtra(
-                AnnotatorAuditDetailActivity.EXTRA_ANNOTATOR_NAME,
-                safeText(annotatorName)
-        );
-        startActivity(intent);
+        // Implementation for opening annotator audit detail
     }
 
     private String safeText(String text) {
@@ -312,66 +299,33 @@ public class ProjectDetailActivity extends AppCompatActivity {
 
     private int getStatusBg(String status) {
         if (status == null) return 0x26F59E0B;
-
         switch (status) {
-            case "active":
-                return 0x2622C55E;
-            case "completed":
-                return 0x263B82F6;
-            case "archived":
-                return 0x269CA3AF;
-            case "draft":
-            default:
-                return 0x26F59E0B;
+            case "active": return 0x2622C55E;
+            case "completed": return 0x263B82F6;
+            case "archived": return 0x269CA3AF;
+            default: return 0x26F59E0B;
         }
     }
 
     private int getStatusText(String status) {
         if (status == null) return 0xFFF59E0B;
-
         switch (status) {
-            case "active":
-                return 0xFF4ADE80;
-            case "completed":
-                return 0xFF60A5FA;
-            case "archived":
-                return 0xFF9CA3AF;
-            case "draft":
-            default:
-                return 0xFFF59E0B;
+            case "active": return 0xFF4ADE80;
+            case "completed": return 0xFF60A5FA;
+            case "archived": return 0xFF94A3B8;
+            default: return 0xFFF59E0B;
         }
     }
 
     private int getReviewBg(String status) {
-        if (status == null) return 0x26F59E0B;
-
-        switch (status) {
-            case "approved":
-                return 0x2610B981;
-            case "rejected":
-                return 0x26EF4444;
-            case "pending":
-            default:
-                return 0x26F59E0B;
-        }
+        return 0x26F59E0B;
     }
 
     private int getReviewText(String status) {
-        if (status == null) return 0xFFFBBF24;
-
-        switch (status) {
-            case "approved":
-                return 0xFF34D399;
-            case "rejected":
-                return 0xFFF87171;
-            case "pending":
-            default:
-                return 0xFFFBBF24;
-        }
+        return 0xFFF59E0B;
     }
 
     private int dp(int value) {
-        float density = getResources().getDisplayMetrics().density;
-        return Math.round(value * density);
+        return (int) (value * getResources().getDisplayMetrics().density);
     }
 }

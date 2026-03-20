@@ -1,6 +1,9 @@
 package com.example.groupassignment.manager.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class DatasetItem implements Serializable {
 
@@ -15,8 +18,10 @@ public class DatasetItem implements Serializable {
     private int rejectedItems;
     private String createdAt;
     private int projectId;
+    private String imageUris; // Stores pipe-separated URIs
 
     public DatasetItem() {
+        this.imageUris = "";
     }
 
     public DatasetItem(int id,
@@ -29,6 +34,7 @@ public class DatasetItem implements Serializable {
                        int pendingAnnotationItems,
                        int rejectedItems,
                        String createdAt) {
+        this();
         this.id = id;
         this.name = name;
         this.description = description;
@@ -128,6 +134,34 @@ public class DatasetItem implements Serializable {
 
     public void setProjectId(int projectId) {
         this.projectId = projectId;
+    }
+
+    public String getImageUris() {
+        return imageUris == null ? "" : imageUris;
+    }
+
+    public void setImageUris(String imageUris) {
+        this.imageUris = imageUris;
+    }
+
+    public List<String> getImageUriList() {
+        if (imageUris == null || imageUris.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(Arrays.asList(imageUris.split("\\|")));
+    }
+
+    public void setImageUriList(List<String> uris) {
+        if (uris == null || uris.isEmpty()) {
+            this.imageUris = "";
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < uris.size(); i++) {
+            sb.append(uris.get(i));
+            if (i < uris.size() - 1) sb.append("|");
+        }
+        this.imageUris = sb.toString();
     }
 
     public boolean isAssignedToProject() {

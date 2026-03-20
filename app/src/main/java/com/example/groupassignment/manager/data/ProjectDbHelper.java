@@ -15,7 +15,7 @@ import java.util.List;
 public class ProjectDbHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "group_assignment.db";
-    private static final int DATABASE_VERSION = 4;
+    private static final int DATABASE_VERSION = 5; // Updated to match other helpers
 
     public static final String TABLE_PROJECTS = "projects";
 

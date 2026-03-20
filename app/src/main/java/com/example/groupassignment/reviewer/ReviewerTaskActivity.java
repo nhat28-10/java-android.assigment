@@ -1,43 +1,39 @@
 package com.example.groupassignment.reviewer;
 
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.annotator.AnnotationView;
 import com.example.groupassignment.reviewer.data.TaskDbHelper;
 import com.example.groupassignment.reviewer.model.TaskItem;
 import com.example.groupassignment.utils.SessionManager;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 
 public class ReviewerTaskActivity extends AppCompatActivity {
 
     public static final String EXTRA_TASK_ID = "extra_task_id";
 
-    private TextView tvTaskTitle;
-    private TextView tvProjectName;
-    private TextView tvDatasetName;
-    private TextView tvAnnotatorName;
-    private TextView tvTaskType;
-    private TextView tvTaskStatus;
-    private TextView tvSubmittedAt;
-    private TextView tvReviewedAt;
-    private TextView tvAnnotationResult;
-    private EditText edtReviewComment;
-    private EditText edtRejectionReason;
-    private Button btnApprove;
-    private Button btnReject;
+    private TextView tvTaskTitle, tvProjectName, tvDatasetName, tvAnnotatorName, tvTaskStatus, tvBoxCount;
+    private AnnotationView annotationView;
+    private Switch swShowLabels;
+    private EditText edtReviewComment, edtRejectionReason;
+    private Button btnApprove, btnReject;
 
     private TaskDbHelper taskDbHelper;
     private int taskId;
     private TaskItem taskItem;
     private SessionManager sessionManager;
-    private int currentReviewerId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,18 +43,11 @@ public class ReviewerTaskActivity extends AppCompatActivity {
         taskDbHelper = new TaskDbHelper(this);
         sessionManager = new SessionManager(this);
 
-        if (!sessionManager.isLoggedIn() || !sessionManager.isReviewer()) {
-            finish();
-            startActivity(com.example.groupassignment.utils.RoleNavigation.buildHomeIntent(this, sessionManager.getRole()));
-            return;
-        }
-
-        currentReviewerId = (int) sessionManager.getUserId();
         taskId = getIntent().getIntExtra(EXTRA_TASK_ID, -1);
-
+        
         initViews();
-        setupActions();
         loadTask();
+        setupActions();
     }
 
     private void initViews() {
@@ -66,110 +55,97 @@ public class ReviewerTaskActivity extends AppCompatActivity {
         tvProjectName = findViewById(R.id.tvProjectName);
         tvDatasetName = findViewById(R.id.tvDatasetName);
         tvAnnotatorName = findViewById(R.id.tvAnnotatorName);
-        tvTaskType = findViewById(R.id.tvTaskType);
         tvTaskStatus = findViewById(R.id.tvTaskStatus);
-        tvSubmittedAt = findViewById(R.id.tvSubmittedAt);
-        tvReviewedAt = findViewById(R.id.tvReviewedAt);
-        tvAnnotationResult = findViewById(R.id.tvAnnotationResult);
+        tvBoxCount = findViewById(R.id.tvBoxCount);
+        
+        annotationView = findViewById(R.id.annotationViewReview);
+        swShowLabels = findViewById(R.id.swShowLabels);
+        
         edtReviewComment = findViewById(R.id.edtReviewComment);
         edtRejectionReason = findViewById(R.id.edtRejectionReason);
         btnApprove = findViewById(R.id.btnApprove);
         btnReject = findViewById(R.id.btnReject);
-    }
 
-    private void setupActions() {
-        btnApprove.setOnClickListener(v -> handleApprove());
-        btnReject.setOnClickListener(v -> handleReject());
+        annotationView.setEnabled(false); // Only for viewing
     }
 
     private void loadTask() {
         if (taskId <= 0) {
-            Toast.makeText(this, "Task không hợp lệ", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
         taskItem = taskDbHelper.getTaskById(taskId);
         if (taskItem == null) {
-            Toast.makeText(this, "Không tìm thấy task", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Task not found", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        if (currentReviewerId > 0 && taskItem.getReviewerId() != currentReviewerId) {
-            Toast.makeText(this, "Bạn không có quyền xem task này", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
+        tvTaskTitle.setText("Review Task #" + taskItem.getId());
+        tvProjectName.setText(taskItem.getProjectName());
+        tvDatasetName.setText(taskItem.getDatasetName());
+        tvAnnotatorName.setText(taskItem.getAnnotatorName());
+        tvTaskStatus.setText(taskItem.getStatus().toUpperCase());
+
+        // LOAD ACTUAL IMAGE
+        if (taskItem.getImageUri() != null && !taskItem.getImageUri().isEmpty()) {
+            try {
+                annotationView.setImageURI(Uri.parse(taskItem.getImageUri()));
+            } catch (Exception e) {
+                Toast.makeText(this, "Image load error", Toast.LENGTH_SHORT).show();
+            }
         }
 
-        bindTask(taskItem);
-    }
+        // LOAD ANNOTATION DATA
+        if (taskItem.getAnnotationResult() != null && !taskItem.getAnnotationResult().isEmpty()) {
+            annotationView.setBoxesFromJson(taskItem.getAnnotationResult());
+            updateBoxCount(taskItem.getAnnotationResult());
+        }
 
-    private void bindTask(TaskItem item) {
-        tvTaskTitle.setText("Review Task #" + item.getId());
-        tvProjectName.setText(item.getProjectName());
-        tvDatasetName.setText(item.getDatasetName());
-        tvAnnotatorName.setText(item.getAnnotatorName());
-        tvTaskType.setText(item.getType());
-        tvTaskStatus.setText(item.getStatus());
-        tvSubmittedAt.setText(safeText(item.getSubmittedAt()));
-        tvReviewedAt.setText(safeText(item.getReviewedAt()));
-        tvAnnotationResult.setText(safeText(item.getAnnotationResult()));
-
-        edtReviewComment.setText(safeText(item.getReviewComments()));
-        edtRejectionReason.setText(safeText(item.getRejectionReason()));
-
-        boolean reviewed = item.isReviewed();
-        if (reviewed) {
+        if (taskItem.isReviewed()) {
             btnApprove.setEnabled(false);
             btnReject.setEnabled(false);
-            btnApprove.setAlpha(0.6f);
-            btnReject.setAlpha(0.6f);
             edtReviewComment.setEnabled(false);
             edtRejectionReason.setEnabled(false);
         }
     }
 
-    private void handleApprove() {
-        String reviewComment = edtReviewComment.getText().toString().trim();
-        boolean success = taskDbHelper.approveTask(taskId, reviewComment);
-
-        if (!success) {
-            Toast.makeText(this, "Không thể approve task", Toast.LENGTH_SHORT).show();
-            return;
+    private void updateBoxCount(String json) {
+        try {
+            JSONArray array = new JSONArray(json);
+            tvBoxCount.setText("Boxes: " + array.length());
+        } catch (Exception e) {
+            tvBoxCount.setText("Boxes: 0");
         }
-
-        Toast.makeText(this, "Đã approve task", Toast.LENGTH_SHORT).show();
-        setResult(RESULT_OK);
-        finish();
     }
 
-    private void handleReject() {
-        String reviewComment = edtReviewComment.getText().toString().trim();
-        String rejectionReason = edtRejectionReason.getText().toString().trim();
-
-        if (TextUtils.isEmpty(rejectionReason)) {
-            edtRejectionReason.setError("Vui lòng nhập reason khi reject");
-            edtRejectionReason.requestFocus();
-            return;
-        }
-
-        boolean success = taskDbHelper.rejectTask(taskId, reviewComment, rejectionReason);
-
-        if (!success) {
-            Toast.makeText(this, "Không thể reject task", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        Toast.makeText(this, "Đã reject task", Toast.LENGTH_SHORT).show();
-        setResult(RESULT_OK);
-        finish();
+    private void setupActions() {
+        btnApprove.setOnClickListener(v -> handleDecision(true));
+        btnReject.setOnClickListener(v -> handleDecision(false));
+        swShowLabels.setOnCheckedChangeListener((b, checked) -> annotationView.setShowLabels(checked));
     }
 
-    private String safeText(String value) {
-        if (value == null || value.trim().isEmpty()) {
-            return "N/A";
+    private void handleDecision(boolean approved) {
+        String comment = edtReviewComment.getText().toString().trim();
+        String reason = edtRejectionReason.getText().toString().trim();
+
+        if (!approved && reason.isEmpty()) {
+            edtRejectionReason.setError("Required for rejection");
+            return;
         }
-        return value;
+
+        boolean success;
+        if (approved) {
+            success = taskDbHelper.approveTask(taskId, comment);
+        } else {
+            success = taskDbHelper.rejectTask(taskId, comment, reason);
+        }
+
+        if (success) {
+            Toast.makeText(this, approved ? "Approved!" : "Rejected!", Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        }
     }
 }

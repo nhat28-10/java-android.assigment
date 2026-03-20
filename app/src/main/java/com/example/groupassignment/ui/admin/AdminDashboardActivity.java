@@ -22,16 +22,18 @@ public class AdminDashboardActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_admin_dashboard);
-
+        
         sessionManager = new SessionManager(this);
-        authDbHelper = new AuthDbHelper(this);
-
+        
+        // Kiểm tra quyền truy cập trước khi setContentView để tránh leak UI
         if (!sessionManager.isLoggedIn() || !sessionManager.isAdmin()) {
             Toast.makeText(this, "Access denied", Toast.LENGTH_SHORT).show();
-            finish();
+            redirectToLogin();
             return;
         }
+
+        setContentView(R.layout.activity_admin_dashboard);
+        authDbHelper = new AuthDbHelper(this);
 
         tvWelcome = findViewById(R.id.tvWelcome);
         tvUserCount = findViewById(R.id.tvUserCount);
@@ -42,26 +44,36 @@ public class AdminDashboardActivity extends AppCompatActivity {
                 startActivity(new Intent(AdminDashboardActivity.this, UserManagementActivity.class))
         );
 
-        btnLogout.setOnClickListener(v -> {
-            sessionManager.logout();
-            Toast.makeText(AdminDashboardActivity.this, "Logged out successfully", Toast.LENGTH_SHORT).show();
-            Intent intent = new Intent(AdminDashboardActivity.this, LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            finish();
-        });
+        btnLogout.setOnClickListener(v -> logout());
 
         loadDashboard();
+    }
+
+    private void redirectToLogin() {
+        Intent intent = new Intent(this, LoginActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    private void logout() {
+        sessionManager.logout();
+        Toast.makeText(this, "Logged out successfully", Toast.LENGTH_SHORT).show();
+        redirectToLogin();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        loadDashboard();
+        if (sessionManager.isLoggedIn() && sessionManager.isAdmin()) {
+            loadDashboard();
+        }
     }
 
     private void loadDashboard() {
-        tvWelcome.setText("Welcome " + sessionManager.getName());
-        tvUserCount.setText("Total Users: " + authDbHelper.getAllUsers().size());
+        if (tvWelcome != null) tvWelcome.setText("Welcome " + sessionManager.getName());
+        if (tvUserCount != null && authDbHelper != null) {
+            tvUserCount.setText("Total Users: " + authDbHelper.getAllUsers().size());
+        }
     }
 }

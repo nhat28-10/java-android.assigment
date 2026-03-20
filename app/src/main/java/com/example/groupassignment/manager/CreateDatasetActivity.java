@@ -1,16 +1,22 @@
 package com.example.groupassignment.manager;
 
+import android.app.Activity;
+import android.content.ClipData;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.InputType;
+import android.util.Log;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
@@ -18,27 +24,33 @@ import com.example.groupassignment.manager.data.DatasetDbHelper;
 import com.example.groupassignment.manager.model.DatasetItem;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class CreateDatasetActivity extends AppCompatActivity {
 
     private ImageButton btnBackCreateDataset;
-    private Button btnSaveDataset;
+    private Button btnSaveDataset, btnSelectImages;
 
-    private EditText etDatasetName;
-    private EditText etDatasetDescription;
+    private EditText etDatasetName, etDatasetDescription;
     private Spinner spDatasetType;
-
-    private EditText etTotalItems;
-    private EditText etApprovedItems;
-    private EditText etSubmittedItems;
-    private EditText etPendingItems;
-    private EditText etRejectedItems;
+    private TextView tvUploadStatus, tvTotalItems, tvPendingItems;
 
     private DatasetDbHelper datasetDbHelper;
     private DatasetItem currentDataset;
     private String currentMode = DatasetsActivity.MODE_CREATE;
+    private List<String> selectedUris = new ArrayList<>();
+
+    private final ActivityResultLauncher<Intent> pickImagesLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    handleImagePickResult(result.getData());
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,176 +69,135 @@ public class CreateDatasetActivity extends AppCompatActivity {
     private void initViews() {
         btnBackCreateDataset = findViewById(R.id.btnBackCreateDataset);
         btnSaveDataset = findViewById(R.id.btnSaveDataset);
+        btnSelectImages = findViewById(R.id.btnSelectImages);
 
         etDatasetName = findViewById(R.id.etDatasetName);
         etDatasetDescription = findViewById(R.id.etDatasetDescription);
         spDatasetType = findViewById(R.id.spDatasetType);
+        tvUploadStatus = findViewById(R.id.tvUploadStatus);
 
-        etTotalItems = findViewById(R.id.etTotalItems);
-        etApprovedItems = findViewById(R.id.etApprovedItems);
-        etSubmittedItems = findViewById(R.id.etSubmittedItems);
-        etPendingItems = findViewById(R.id.etPendingItems);
-        etRejectedItems = findViewById(R.id.etRejectedItems);
-
-        etTotalItems.setInputType(InputType.TYPE_CLASS_NUMBER);
-        etApprovedItems.setInputType(InputType.TYPE_CLASS_NUMBER);
-        etSubmittedItems.setInputType(InputType.TYPE_CLASS_NUMBER);
-        etPendingItems.setInputType(InputType.TYPE_CLASS_NUMBER);
-        etRejectedItems.setInputType(InputType.TYPE_CLASS_NUMBER);
+        tvTotalItems = findViewById(R.id.tvTotalItems);
+        tvPendingItems = findViewById(R.id.tvPendingItems);
     }
 
     private void setupSpinner() {
         String[] types = {"image", "text", "audio"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                this,
-                android.R.layout.simple_spinner_dropdown_item,
-                types
-        );
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, types);
         spDatasetType.setAdapter(adapter);
+        spDatasetType.setEnabled(false);
     }
 
     private void readIntentData() {
         Intent intent = getIntent();
         if (intent == null) return;
+        currentMode = intent.getStringExtra(DatasetsActivity.EXTRA_DATASET_MODE);
+        if (currentMode == null) currentMode = DatasetsActivity.MODE_CREATE;
 
-        String mode = intent.getStringExtra(DatasetsActivity.EXTRA_DATASET_MODE);
-        if (mode != null) {
-            currentMode = mode;
-        }
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            currentDataset = intent.getSerializableExtra(
-                    DatasetsActivity.EXTRA_DATASET_RESULT,
-                    DatasetItem.class
-            );
-        } else {
-            currentDataset = (DatasetItem) intent.getSerializableExtra(
-                    DatasetsActivity.EXTRA_DATASET_RESULT
-            );
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                currentDataset = intent.getSerializableExtra(DatasetsActivity.EXTRA_DATASET_RESULT, DatasetItem.class);
+            } else {
+                currentDataset = (DatasetItem) intent.getSerializableExtra(DatasetsActivity.EXTRA_DATASET_RESULT);
+            }
+        } catch (Exception e) {
+            Log.e("CreateDataset", "Error reading intent data", e);
         }
     }
 
     private void bindDataIfEditMode() {
-        if (!DatasetsActivity.MODE_EDIT.equals(currentMode) || currentDataset == null) {
-            return;
-        }
+        if (!DatasetsActivity.MODE_EDIT.equals(currentMode) || currentDataset == null) return;
 
-        etDatasetName.setText(safeText(currentDataset.getName()));
-        etDatasetDescription.setText(safeText(currentDataset.getDescription()));
-
-        String type = safeText(currentDataset.getType()).toLowerCase(Locale.getDefault());
-        if ("text".equals(type)) {
-            spDatasetType.setSelection(1);
-        } else if ("audio".equals(type)) {
-            spDatasetType.setSelection(2);
-        } else {
-            spDatasetType.setSelection(0);
-        }
-
-        etTotalItems.setText(String.valueOf(currentDataset.getTotalItems()));
-        etApprovedItems.setText(String.valueOf(currentDataset.getApprovedItems()));
-        etSubmittedItems.setText(String.valueOf(currentDataset.getSubmittedItems()));
-        etPendingItems.setText(String.valueOf(currentDataset.getPendingAnnotationItems()));
-        etRejectedItems.setText(String.valueOf(currentDataset.getRejectedItems()));
+        etDatasetName.setText(currentDataset.getName());
+        etDatasetDescription.setText(currentDataset.getDescription());
+        selectedUris = new ArrayList<>(currentDataset.getImageUriList());
+        updateUploadUi();
     }
 
     private void setupActions() {
         btnBackCreateDataset.setOnClickListener(v -> finish());
+        btnSelectImages.setOnClickListener(v -> openImagePicker());
         btnSaveDataset.setOnClickListener(v -> saveDataset());
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("image/*");
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+        pickImagesLauncher.launch(intent);
+    }
+
+    private void handleImagePickResult(Intent data) {
+        selectedUris.clear();
+        int takeFlags = Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION;
+        
+        if (data.getClipData() != null) {
+            ClipData clipData = data.getClipData();
+            for (int i = 0; i < clipData.getItemCount(); i++) {
+                Uri uri = clipData.getItemAt(i).getUri();
+                persistUriPermission(uri, takeFlags);
+                selectedUris.add(uri.toString());
+            }
+        } else if (data.getData() != null) {
+            Uri uri = data.getData();
+            persistUriPermission(uri, takeFlags);
+            selectedUris.add(uri.toString());
+        }
+        updateUploadUi();
+    }
+
+    private void persistUriPermission(Uri uri, int takeFlags) {
+        try {
+            getContentResolver().takePersistableUriPermission(uri, takeFlags);
+        } catch (Exception e) {
+            Log.e("CreateDataset", "Failed to take persistable permission for: " + uri, e);
+        }
+    }
+
+    private void updateUploadUi() {
+        int count = selectedUris.size();
+        tvUploadStatus.setText(count + (count == 1 ? " image" : " images") + " selected");
+        tvTotalItems.setText(String.valueOf(count));
+        tvPendingItems.setText(String.valueOf(count));
     }
 
     private void saveDataset() {
         String name = etDatasetName.getText().toString().trim();
-        String description = etDatasetDescription.getText().toString().trim();
-        String type = spDatasetType.getSelectedItem().toString();
-
         if (name.isEmpty()) {
-            etDatasetName.setError("Nhập tên dataset");
+            etDatasetName.setError("Name required");
+            return;
+        }
+        if (selectedUris.isEmpty()) {
+            Toast.makeText(this, "Please upload at least one image", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        int totalItems = parseNumber(etTotalItems, "Nhập total items");
-        int approvedItems = parseNumber(etApprovedItems, "Nhập approved items");
-        int submittedItems = parseNumber(etSubmittedItems, "Nhập under review items");
-        int pendingItems = parseNumber(etPendingItems, "Nhập pending items");
-        int rejectedItems = parseNumber(etRejectedItems, "Nhập rejected items");
-
-        if (totalItems < 0 || approvedItems < 0 || submittedItems < 0 || pendingItems < 0 || rejectedItems < 0) {
-            Toast.makeText(this, "Số lượng không hợp lệ", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        if (approvedItems > totalItems) {
-            etApprovedItems.setError("Approved không được lớn hơn total");
-            return;
-        }
-
-        DatasetItem item = new DatasetItem();
-        if (DatasetsActivity.MODE_EDIT.equals(currentMode) && currentDataset != null) {
-            item.setId(currentDataset.getId());
-        }
-
+        DatasetItem item = (currentDataset != null) ? currentDataset : new DatasetItem();
         item.setName(name);
-        item.setDescription(description);
-        item.setType(type);
-        item.setTotalItems(totalItems);
-        item.setApprovedItems(approvedItems);
-        item.setSubmittedItems(submittedItems);
-        item.setPendingAnnotationItems(pendingItems);
-        item.setRejectedItems(rejectedItems);
-        item.setCreatedAt(getNowText());
+        item.setDescription(etDatasetDescription.getText().toString().trim());
+        item.setType("image");
+        item.setTotalItems(selectedUris.size());
+        item.setPendingAnnotationItems(selectedUris.size());
+        // Đảm bảo cập nhật lại danh sách URI mới nhất
+        item.setImageUriList(selectedUris);
+        
+        if (item.getCreatedAt() == null || item.getCreatedAt().isEmpty()) {
+            item.setCreatedAt(new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date()));
+        }
 
-        long insertResult = -1;
-        int updateResult = 0;
-
-        if (DatasetsActivity.MODE_EDIT.equals(currentMode) && currentDataset != null) {
-            updateResult = datasetDbHelper.updateDataset(item);
-            if (updateResult <= 0) {
-                Toast.makeText(this, "Cập nhật dataset thất bại", Toast.LENGTH_SHORT).show();
-                return;
-            }
+        long resultId;
+        if (DatasetsActivity.MODE_EDIT.equals(currentMode)) {
+            resultId = datasetDbHelper.updateDataset(item);
         } else {
-            insertResult = datasetDbHelper.insertDataset(item);
-            if (insertResult <= 0) {
-                Toast.makeText(this, "Tạo dataset thất bại", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            item.setId((int) insertResult);
+            resultId = datasetDbHelper.insertDataset(item);
         }
 
-        Intent resultIntent = new Intent();
-        resultIntent.putExtra(DatasetsActivity.EXTRA_DATASET_RESULT, item);
-        setResult(RESULT_OK, resultIntent);
-
-        Toast.makeText(
-                this,
-                DatasetsActivity.MODE_EDIT.equals(currentMode) ? "Dataset updated" : "Dataset created",
-                Toast.LENGTH_SHORT
-        ).show();
-
-        finish();
-    }
-
-    private int parseNumber(EditText editText, String errorText) {
-        String value = editText.getText().toString().trim();
-        if (value.isEmpty()) {
-            editText.setText("0");
-            return 0;
+        if (resultId != -1) {
+            Toast.makeText(this, "Dataset saved successfully", Toast.LENGTH_SHORT).show();
+            setResult(RESULT_OK);
+            finish();
+        } else {
+            Toast.makeText(this, "Failed to save dataset", Toast.LENGTH_SHORT).show();
         }
-
-        try {
-            return Integer.parseInt(value);
-        } catch (Exception e) {
-            editText.setError(errorText);
-            return -1;
-        }
-    }
-
-    private String safeText(String text) {
-        return text == null ? "" : text;
-    }
-
-    private String getNowText() {
-        return new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date());
     }
 }
