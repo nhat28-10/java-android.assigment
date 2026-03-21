@@ -142,11 +142,15 @@ public class AnnotatorTaskActivity extends AppCompatActivity {
 
             // Background chip
             updateChipUI(chip, colorStr, i == 0);
-            if (i == 0) drawingView.setSelectedLabel(label);
+            if (i == 0) {
+                drawingView.setSelectedLabel(label);
+                drawingView.setSelectedColor(Color.parseColor(colorStr));
+            }
 
             final int index = i;
             chip.setOnClickListener(v -> {
                 drawingView.setSelectedLabel(label);
+                drawingView.setSelectedColor(Color.parseColor(colorStr));
                 // Reset UI of all chips
                 for (int j = 0; j < layoutLabelChips.getChildCount(); j++) {
                     updateChipUI((TextView) layoutLabelChips.getChildAt(j), labelColors[j % labelColors.length], j == index);
