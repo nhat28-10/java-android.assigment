@@ -54,14 +54,13 @@
                     android:orientation="vertical"
                     android:visibility="gone">
 
-                    <ImageView
+                    <com.example.groupassignment.annotator.AnnotationDrawingView
                         android:id="@+id/ivSourcePreview"
                         android:layout_width="match_parent"
-                        android:layout_height="260dp"
-                        android:adjustViewBounds="true"
+                        android:layout_height="400dp"
                         android:background="@drawable/bg_input_dark"
                         android:contentDescription="Source image preview"
-                        android:scaleType="centerCrop" />
+                        android:scaleType="fitCenter" />
                 </LinearLayout>
 
                 <LinearLayout
