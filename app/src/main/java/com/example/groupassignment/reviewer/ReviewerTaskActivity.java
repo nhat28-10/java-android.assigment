@@ -187,7 +187,11 @@ public class ReviewerTaskActivity extends AppCompatActivity {
                 ivSourcePreview.setImageBitmap(bitmap);
                 String annotationJson = item.getAnnotationResult();
                 if (!TextUtils.isEmpty(annotationJson) && annotationJson.trim().startsWith("[")) {
+ codex/fix-annotation-overlay-for-reviewer
+                    ivSourcePreview.post(() -> ivSourcePreview.loadBoxesFromJson(annotationJson));
+
                     ivSourcePreview.loadBoxesFromJson(annotationJson);
+
                 }
             } else {
                 tvSourceMeta.append("\nPreview unavailable. Check SAF permission or source URI.");

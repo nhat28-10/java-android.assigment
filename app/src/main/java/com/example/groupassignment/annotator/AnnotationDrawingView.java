@@ -4,7 +4,9 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
+
 import android.graphics.Matrix;
+
 import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.RectF;
@@ -117,7 +119,11 @@ public class AnnotationDrawingView extends AppCompatImageView {
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN: {
                 PointF startPoint = mapPointToImage(event.getX(), event.getY(), false);
+ codex/fix-annotation-overlay-for-reviewer
+                if (startPoint == null) {
+
                 if (startPoint == null || !isPointInsideImage(startPoint)) {
+processing
                     return false;
                 }
                 if (getParent() != null) {
@@ -268,6 +274,26 @@ public class AnnotationDrawingView extends AppCompatImageView {
 
     @Nullable
     private RectF mapRectToView(RectF imageRect) {
+codex/fix-annotation-overlay-for-reviewer
+        Drawable drawable = getDrawable();
+        RectF imageDisplayRect = getImageDisplayRect();
+        if (drawable == null || imageDisplayRect == null) {
+            return null;
+        }
+
+        float imageWidth = drawable.getIntrinsicWidth();
+        float imageHeight = drawable.getIntrinsicHeight();
+        if (imageWidth <= 0f || imageHeight <= 0f) {
+            return null;
+        }
+
+        return new RectF(
+                imageDisplayRect.left + (imageRect.left / imageWidth) * imageDisplayRect.width(),
+                imageDisplayRect.top + (imageRect.top / imageHeight) * imageDisplayRect.height(),
+                imageDisplayRect.left + (imageRect.right / imageWidth) * imageDisplayRect.width(),
+                imageDisplayRect.top + (imageRect.bottom / imageHeight) * imageDisplayRect.height()
+        );
+
         Matrix matrix = getImageMatrix();
         Drawable drawable = getDrawable();
         if (matrix == null || drawable == null) {
@@ -281,6 +307,46 @@ public class AnnotationDrawingView extends AppCompatImageView {
     @Nullable
     private PointF mapPointToImage(float viewX, float viewY, boolean clampToBounds) {
         Drawable drawable = getDrawable();
+ codex/fix-annotation-overlay-for-reviewer
+        RectF imageDisplayRect = getImageDisplayRect();
+        if (drawable == null || imageDisplayRect == null || imageDisplayRect.width() <= 0f || imageDisplayRect.height() <= 0f) {
+            return null;
+        }
+
+        if (!clampToBounds && !imageDisplayRect.contains(viewX, viewY)) {
+            return null;
+        }
+
+        float clampedX = clamp(viewX, imageDisplayRect.left, imageDisplayRect.right);
+        float clampedY = clamp(viewY, imageDisplayRect.top, imageDisplayRect.bottom);
+
+        float imageX = ((clampedX - imageDisplayRect.left) / imageDisplayRect.width()) * drawable.getIntrinsicWidth();
+        float imageY = ((clampedY - imageDisplayRect.top) / imageDisplayRect.height()) * drawable.getIntrinsicHeight();
+        return new PointF(imageX, imageY);
+    }
+
+    @Nullable
+    private RectF getImageDisplayRect() {
+        Drawable drawable = getDrawable();
+        if (drawable == null) {
+            return null;
+        }
+
+        float drawableWidth = drawable.getIntrinsicWidth();
+        float drawableHeight = drawable.getIntrinsicHeight();
+        float availableWidth = getWidth() - getPaddingLeft() - getPaddingRight();
+        float availableHeight = getHeight() - getPaddingTop() - getPaddingBottom();
+        if (drawableWidth <= 0f || drawableHeight <= 0f || availableWidth <= 0f || availableHeight <= 0f) {
+            return null;
+        }
+
+        float scale = Math.min(availableWidth / drawableWidth, availableHeight / drawableHeight);
+        float displayedWidth = drawableWidth * scale;
+        float displayedHeight = drawableHeight * scale;
+        float left = getPaddingLeft() + ((availableWidth - displayedWidth) / 2f);
+        float top = getPaddingTop() + ((availableHeight - displayedHeight) / 2f);
+        return new RectF(left, top, left + displayedWidth, top + displayedHeight);
+
         Matrix imageMatrix = getImageMatrix();
         if (drawable == null || imageMatrix == null) {
             return null;
@@ -303,6 +369,7 @@ public class AnnotationDrawingView extends AppCompatImageView {
         return drawable != null
                 && point.x >= 0f && point.x <= drawable.getIntrinsicWidth()
                 && point.y >= 0f && point.y <= drawable.getIntrinsicHeight();
+
     }
 
     private RectF normalizeRect(RectF rect) {
