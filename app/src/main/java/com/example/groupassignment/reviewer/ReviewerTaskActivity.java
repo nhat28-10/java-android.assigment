@@ -8,13 +8,13 @@ import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.groupassignment.R;
+import com.example.groupassignment.annotator.AnnotationDrawingView;
 import com.example.groupassignment.auth.data.AuthDbHelper;
 import com.example.groupassignment.auth.model.User;
 import com.example.groupassignment.manager.SourceItemPreviewHelper;
@@ -42,7 +42,7 @@ public class ReviewerTaskActivity extends AppCompatActivity {
     private TextView tvAnnotationPayload;
     private EditText edtReviewComment;
     private EditText edtRejectionReason;
-    private ImageView ivSourcePreview;
+    private AnnotationDrawingView ivSourcePreview;
     private View layoutImagePreview;
     private View layoutAudioPreview;
     private View layoutTextPreview;
@@ -109,6 +109,7 @@ public class ReviewerTaskActivity extends AppCompatActivity {
         edtReviewComment = findViewById(R.id.edtReviewComment);
         edtRejectionReason = findViewById(R.id.edtRejectionReason);
         ivSourcePreview = findViewById(R.id.ivSourcePreview);
+        ivSourcePreview.setReadOnly(true);
         layoutImagePreview = findViewById(R.id.layoutImagePreview);
         layoutAudioPreview = findViewById(R.id.layoutAudioPreview);
         layoutTextPreview = findViewById(R.id.layoutTextPreview);
@@ -173,6 +174,7 @@ public class ReviewerTaskActivity extends AppCompatActivity {
         layoutAudioPreview.setVisibility(View.GONE);
         layoutTextPreview.setVisibility(View.GONE);
         ivSourcePreview.setImageDrawable(null);
+        ivSourcePreview.loadBoxesFromJson(null);
         tvSourceTextPreview.setText("");
 
         String sourceUri = item.getSourceUri();
@@ -183,6 +185,10 @@ public class ReviewerTaskActivity extends AppCompatActivity {
             Bitmap bitmap = SourceItemPreviewHelper.loadImageThumbnail(this, sourceUri, 1600);
             if (bitmap != null) {
                 ivSourcePreview.setImageBitmap(bitmap);
+                String annotationJson = item.getAnnotationResult();
+                if (!TextUtils.isEmpty(annotationJson) && annotationJson.trim().startsWith("[")) {
+                    ivSourcePreview.loadBoxesFromJson(annotationJson);
+                }
             } else {
                 tvSourceMeta.append("\nPreview unavailable. Check SAF permission or source URI.");
             }
